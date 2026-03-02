@@ -1,9 +1,9 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import prisma from "../lib/prisma";
-import { authenticate, AuthRequest } from "../middleware/auth";
-import { Role } from "../generated/prisma/enums";
+import prisma from "../../lib/prisma";
+import { authenticate, AuthRequest } from "../../middleware/auth";
+import { Role } from "../../generated/prisma/enums";
 
 const router = Router();
 
@@ -57,7 +57,7 @@ router.post("/login", async (req, res) => {
   res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
 });
 
-// Protected example
+
 router.get("/me", authenticate, async (req: AuthRequest, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId } });
   res.json(user);
