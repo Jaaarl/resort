@@ -13,9 +13,202 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum ReservationType {
+  ROOM
+  POOL
+  BOTH
+}
+
+enum MaintenanceType {
+  DAILY
+  MONTHLY
+  DRAIN
+}
+
+//////////////////////
+// USER
+//////////////////////
+
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
+  name      String
   email     String   @unique
   password  String
+  role      Role     @default(STAFF)
   createdAt DateTime @default(now())
+
+  reservations Reservation[]
+}
+
+//////////////////////
+// ROOM
+//////////////////////
+
+model Room {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal
+  capacity    Int
+  isActive    Boolean  @default(true)
+
+  reservations Reservation[]
+}
+
+//////////////////////
+// POOL SLOT
+//////////////////////
+
+model PoolSlot {
+  id        String   @id @default(uuid())
+  date      DateTime
+  startTime DateTime
+  endTime   DateTime
+  capacity  Int
+  price     Decimal
+
+  reservation Reservation?
+}
+
+//////////////////////
+// RESERVATION
+//////////////////////
+
+model Reservation {
+  id             String            @id @default(uuid())
+  customerName   String
+  customerPhone  String
+  type           ReservationType
+  status         ReservationStatus @default(PENDING)
+
+  // ROOM (many reservations can use same room over time)
+  roomId         String?
+  room           Room?             @relation(fields: [roomId], references: [id])
+
+  // POOL SLOT (1-to-1)
+  poolSlotId     String?           @unique
+  poolSlot       PoolSlot?         @relation(fields: [poolSlotId], references: [id])
+
+  // STAFF USER
+  userId         String?
+  user           User?             @relation(fields: [userId], references: [id])
+
+  totalAmount    Decimal
+  createdAt      DateTime          @default(now())
+
+  addOns         ReservationAddOn[]
+  payments       Payment[]
+  feedbacks      Feedback[]
+}
+
+//////////////////////
+// ADD-ONS
+//////////////////////
+
+model AddOn {
+  id       String   @id @default(uuid())
+  name     String
+  price    Decimal
+  isActive Boolean  @default(true)
+
+  reservations ReservationAddOn[]
+}
+
+model ReservationAddOn {
+  id            String      @id @default(uuid())
+  reservationId String
+  addOnId       String
+  quantity      Int         @default(1)
+
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  addOn         AddOn       @relation(fields: [addOnId], references: [id])
+
+  @@unique([reservationId, addOnId])
+}
+
+//////////////////////
+// PAYMENT
+//////////////////////
+
+model Payment {
+  id            String   @id @default(uuid())
+  reservationId String
+  amount        Decimal
+  method        String
+  paidAt        DateTime @default(now())
+
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+}
+
+//////////////////////
+// INVENTORY
+//////////////////////
+
+model InventoryItem {
+  id        String   @id @default(uuid())
+  name      String
+  stock     Int
+  price     Decimal
+  createdAt DateTime @default(now())
+
+  sales     SaleItem[]
+}
+
+model Sale {
+  id        String   @id @default(uuid())
+  total     Decimal
+  createdAt DateTime @default(now())
+
+  items     SaleItem[]
+}
+
+model SaleItem {
+  id        String   @id @default(uuid())
+  saleId    String
+  itemId    String
+  quantity  Int
+  price     Decimal
+
+  sale      Sale          @relation(fields: [saleId], references: [id])
+  item      InventoryItem @relation(fields: [itemId], references: [id])
+
+  @@unique([saleId, itemId])
+}
+
+//////////////////////
+// MAINTENANCE
+//////////////////////
+
+model MaintenanceLog {
+  id          String          @id @default(uuid())
+  type        MaintenanceType
+  description String?
+  performedBy String?
+  createdAt   DateTime        @default(now())
+}
+
+//////////////////////
+// FEEDBACK
+//////////////////////
+
+model Feedback {
+  id            String   @id @default(uuid())
+  reservationId String?
+  rating        Int
+  comment       String?
+  createdAt     DateTime @default(now())
+
+  reservation   Reservation? @relation(fields: [reservationId], references: [id])
 }
