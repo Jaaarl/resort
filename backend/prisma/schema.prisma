@@ -57,12 +57,12 @@ model User {
 //////////////////////
 
 model Room {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
   price       Decimal
   capacity    Int
-  isActive    Boolean  @default(true)
+  isActive    Boolean @default(true)
 
   reservations Reservation[]
 }
@@ -87,30 +87,36 @@ model PoolSlot {
 //////////////////////
 
 model Reservation {
-  id             String            @id @default(uuid())
-  customerName   String
-  customerPhone  String
-  type           ReservationType
-  status         ReservationStatus @default(PENDING)
+  id               String            @id @default(uuid())
+  customerName     String
+  customerPhone    String
+  customerLocation String?
+  customerEmail    String?
+  type             ReservationType
+  status           ReservationStatus @default(PENDING)
+  checkIn          DateTime? // add this
+  checkOut         DateTime?
+  totalPerson      Int
 
   // ROOM (many reservations can use same room over time)
-  roomId         String?
-  room           Room?             @relation(fields: [roomId], references: [id])
+  roomId String?
+  room   Room?   @relation(fields: [roomId], references: [id])
 
   // POOL SLOT (1-to-1)
-  poolSlotId     String?           @unique
-  poolSlot       PoolSlot?         @relation(fields: [poolSlotId], references: [id])
+  poolSlotId String?   @unique
+  poolSlot   PoolSlot? @relation(fields: [poolSlotId], references: [id])
 
   // STAFF USER
-  userId         String?
-  user           User?             @relation(fields: [userId], references: [id])
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
 
-  totalAmount    Decimal
-  createdAt      DateTime          @default(now())
+  totalAmount Decimal
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  addOns         ReservationAddOn[]
-  payments       Payment[]
-  feedbacks      Feedback[]
+  addOns    ReservationAddOn[]
+  payments  Payment[]
+  feedbacks Feedback[]
 }
 
 //////////////////////
@@ -118,22 +124,22 @@ model Reservation {
 //////////////////////
 
 model AddOn {
-  id       String   @id @default(uuid())
+  id       String  @id @default(uuid())
   name     String
   price    Decimal
-  isActive Boolean  @default(true)
+  isActive Boolean @default(true)
 
   reservations ReservationAddOn[]
 }
 
 model ReservationAddOn {
-  id            String      @id @default(uuid())
+  id            String @id @default(uuid())
   reservationId String
   addOnId       String
-  quantity      Int         @default(1)
+  quantity      Int    @default(1)
 
-  reservation   Reservation @relation(fields: [reservationId], references: [id])
-  addOn         AddOn       @relation(fields: [addOnId], references: [id])
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+  addOn       AddOn       @relation(fields: [addOnId], references: [id])
 
   @@unique([reservationId, addOnId])
 }
@@ -149,7 +155,7 @@ model Payment {
   method        String
   paidAt        DateTime @default(now())
 
-  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  reservation Reservation @relation(fields: [reservationId], references: [id])
 }
 
 //////////////////////
@@ -163,7 +169,7 @@ model InventoryItem {
   price     Decimal
   createdAt DateTime @default(now())
 
-  sales     SaleItem[]
+  sales SaleItem[]
 }
 
 model Sale {
@@ -171,18 +177,18 @@ model Sale {
   total     Decimal
   createdAt DateTime @default(now())
 
-  items     SaleItem[]
+  items SaleItem[]
 }
 
 model SaleItem {
-  id        String   @id @default(uuid())
-  saleId    String
-  itemId    String
-  quantity  Int
-  price     Decimal
+  id       String  @id @default(uuid())
+  saleId   String
+  itemId   String
+  quantity Int
+  price    Decimal
 
-  sale      Sale          @relation(fields: [saleId], references: [id])
-  item      InventoryItem @relation(fields: [itemId], references: [id])
+  sale Sale          @relation(fields: [saleId], references: [id])
+  item InventoryItem @relation(fields: [itemId], references: [id])
 
   @@unique([saleId, itemId])
 }
@@ -210,5 +216,5 @@ model Feedback {
   comment       String?
   createdAt     DateTime @default(now())
 
-  reservation   Reservation? @relation(fields: [reservationId], references: [id])
+  reservation Reservation? @relation(fields: [reservationId], references: [id])
 }
