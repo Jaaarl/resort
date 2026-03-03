@@ -4,6 +4,7 @@ dotenv.config(); // always first
 
 import prisma from "./lib/prisma";
 import router from "./routes/router";
+import { errorHandler } from "./middleware/error";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,9 @@ app.get("/health", async (req, res) => {
 
 // Routes
 app.use("/api", router);
+
+// Global Error handling
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
