@@ -1,10 +1,15 @@
 import { z } from "zod";
 
-export const updatePoolSlotSchema = z.object({
-  startTime: z.string().datetime().optional(),
-  endTime: z.string().datetime().optional(),
-  capacity: z.number().int().positive().optional(),
-  price: z.number().positive().optional(),
+export const createPoolSlotSchema = z.object({
+  date: z.string().datetime(),
+  startTime: z.string().datetime(),
+  endTime: z.string().datetime(),
+  capacity: z.number().int().positive(),
+  price: z.number().positive(),
+  label: z.enum(["MORNING", "AFTERNOON"]), // add this
 });
 
+export const updatePoolSlotSchema = createPoolSlotSchema.partial();
+
+export type CreatePoolSlotInput = z.infer<typeof createPoolSlotSchema>;
 export type UpdatePoolSlotInput = z.infer<typeof updatePoolSlotSchema>;
