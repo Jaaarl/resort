@@ -37,6 +37,11 @@ enum MaintenanceType {
   DRAIN
 }
 
+enum PoolSlotLabel {
+  MORNING
+  AFTERNOON
+}
+
 //////////////////////
 // USER
 //////////////////////
@@ -72,12 +77,13 @@ model Room {
 //////////////////////
 
 model PoolSlot {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   date      DateTime
   startTime DateTime
   endTime   DateTime
   capacity  Int
   price     Decimal
+  label     PoolSlotLabel
 
   reservation Reservation?
 }
