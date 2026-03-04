@@ -78,14 +78,23 @@ model Room {
 
 model PoolSlot {
   id        String        @id @default(uuid())
-  date      DateTime
-  startTime DateTime
-  endTime   DateTime
+  label     PoolSlotLabel @unique
+  startTime String
+  endTime   String
   capacity  Int
   price     Decimal
-  label     PoolSlotLabel
 
-  reservation Reservation?
+  reservations Reservation[]
+}
+
+model PoolSlotDisabled {
+  id        String        @id @default(uuid())
+  label     PoolSlotLabel
+  date      DateTime
+  reason    String?
+  createdAt DateTime      @default(now())
+
+  @@unique([label, date])
 }
 
 //////////////////////
@@ -104,13 +113,14 @@ model Reservation {
   checkOut         DateTime?
   totalPerson      Int
 
-  // ROOM (many reservations can use same room over time)
+  // ROOM
   roomId String?
   room   Room?   @relation(fields: [roomId], references: [id])
 
-  // POOL SLOT (1-to-1)
-  poolSlotId String?   @unique
-  poolSlot   PoolSlot? @relation(fields: [poolSlotId], references: [id])
+  // POOL
+  poolSlotId String?           // removed @unique
+  poolSlot   PoolSlot?         @relation(fields: [poolSlotId], references: [id])
+  poolDate   DateTime?         // which date they want the pool
 
   // STAFF USER
   userId String?
