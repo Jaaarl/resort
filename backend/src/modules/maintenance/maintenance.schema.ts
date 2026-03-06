@@ -3,7 +3,7 @@ import { z } from "zod";
 export const createMaintenanceTaskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  frequency: z.enum(["DAILY", "MONTHLY"]),
+  frequency: z.enum(["DAILY", "MONTHLY", "ONCE"]),
   dueDate: z.string().datetime(),
   assignedToId: z.string().min(1, "Assigned user is required"),
   createdById: z.string().min(1, "Creator is required"),

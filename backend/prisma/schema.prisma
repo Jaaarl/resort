@@ -51,6 +51,7 @@ enum TaskStatus {
 enum TaskFrequency {
   DAILY
   MONTHLY
+  ONCE
 }
 
 //////////////////////
