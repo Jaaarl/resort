@@ -54,6 +54,16 @@ enum TaskFrequency {
   ONCE
 }
 
+enum InventoryType {
+  SHOP
+  MAINTENANCE
+}
+
+enum MovementType {
+  IN    // restock
+  OUT   // sold or used
+}
+
 //////////////////////
 // USER
 //////////////////////
@@ -71,6 +81,7 @@ model User {
 
   assignedTasks   MaintenanceTask[] @relation("TaskAssignedTo")
   createdTasks    MaintenanceTask[] @relation("TaskCreatedBy")
+  inventoryMovements  InventoryMovement[]
 }
 
 //////////////////////
@@ -195,35 +206,32 @@ model Payment {
 //////////////////////
 
 model InventoryItem {
-  id        String   @id @default(uuid())
-  name      String
-  stock     Int
-  price     Decimal
-  createdAt DateTime @default(now())
+  id            String        @id @default(uuid())
+  name          String
+  description   String?
+  type          InventoryType
+  quantity      Int           @default(0)
+  unit          String        // e.g. "pcs", "liters", "kg"
+  lowStockAlert Int           // alert when quantity falls below this
+  price         Decimal?      // only relevant for SHOP items
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  sales SaleItem[]
+  movements     InventoryMovement[]
 }
 
-model Sale {
-  id        String   @id @default(uuid())
-  total     Decimal
-  createdAt DateTime @default(now())
-
-  items SaleItem[]
+model InventoryMovement {
+  id          String        @id @default(uuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  type        MovementType
+  quantity    Int
+  reason      String?       // e.g. "restocked", "sold", "used for maintenance"
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  createdAt   DateTime      @default(now())
 }
 
-model SaleItem {
-  id       String  @id @default(uuid())
-  saleId   String
-  itemId   String
-  quantity Int
-  price    Decimal
-
-  sale Sale          @relation(fields: [saleId], references: [id])
-  item InventoryItem @relation(fields: [itemId], references: [id])
-
-  @@unique([saleId, itemId])
-}
 
 //////////////////////
 // MAINTENANCE
