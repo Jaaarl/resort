@@ -10,8 +10,25 @@ import {
 export const getAllTasks = async () => {
   return await prisma.maintenanceTask.findMany({
     include: {
-      assignedTo: true,
-      createdBy: true,
+      assignedTo: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          // password excluded
+        },
+      },
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      },
     },
     orderBy: { dueDate: "asc" },
   });
@@ -21,8 +38,25 @@ export const getTaskById = async (id: string) => {
   const task = await prisma.maintenanceTask.findUnique({
     where: { id },
     include: {
-      assignedTo: true,
-      createdBy: true,
+      assignedTo: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          // password excluded
+        },
+      },
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      },
     },
   });
 
@@ -35,8 +69,25 @@ export const getTasksByAssignedUser = async (userId: string) => {
   return await prisma.maintenanceTask.findMany({
     where: { assignedToId: userId },
     include: {
-      assignedTo: true,
-      createdBy: true,
+      assignedTo: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          // password excluded
+        },
+      },
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      },
     },
     orderBy: { dueDate: "asc" },
   });
@@ -46,8 +97,25 @@ export const getTasksByFrequency = async (frequency: "DAILY" | "MONTHLY") => {
   return await prisma.maintenanceTask.findMany({
     where: { frequency },
     include: {
-      assignedTo: true,
-      createdBy: true,
+      assignedTo: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          // password excluded
+        },
+      },
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      },
     },
     orderBy: { dueDate: "asc" },
   });
@@ -71,8 +139,25 @@ export const createTask = async (data: CreateMaintenanceTaskInput) => {
       createdById: data.createdById,
     },
     include: {
-      assignedTo: true,
-      createdBy: true,
+      assignedTo: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          // password excluded
+        },
+      },
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      },
     },
   });
 };
@@ -93,8 +178,25 @@ export const updateTask = async (
       ...(data.assignedToId && { assignedToId: data.assignedToId }),
     },
     include: {
-      assignedTo: true,
-      createdBy: true,
+      assignedTo: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          // password excluded
+        },
+      },
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      },
     },
   });
 };
