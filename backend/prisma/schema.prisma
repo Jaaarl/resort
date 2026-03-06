@@ -42,6 +42,17 @@ enum PoolSlotLabel {
   AFTERNOON
 }
 
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskFrequency {
+  DAILY
+  MONTHLY
+}
+
 //////////////////////
 // USER
 //////////////////////
@@ -55,6 +66,10 @@ model User {
   createdAt DateTime @default(now())
 
   reservations Reservation[]
+
+
+  assignedTasks   MaintenanceTask[] @relation("TaskAssignedTo")
+  createdTasks    MaintenanceTask[] @relation("TaskCreatedBy")
 }
 
 //////////////////////
@@ -220,6 +235,29 @@ model MaintenanceLog {
   performedBy String?
   createdAt   DateTime        @default(now())
 }
+model MaintenanceTask {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  frequency   TaskFrequency
+  status      TaskStatus    @default(PENDING)
+  dueDate     DateTime
+  completedAt DateTime?
+  remarks     String?       // optional, staff adds when completing
+  photoUrl    String?       // optional, proof photo
+
+  // assigned to
+  assignedToId String
+  assignedTo   User     @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+
+  // created by (admin only)
+  createdById  String
+  createdBy    User     @relation("TaskCreatedBy", fields: [createdById], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 
 //////////////////////
 // FEEDBACK
