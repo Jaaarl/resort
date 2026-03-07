@@ -165,22 +165,26 @@ model Reservation {
 //////////////////////
 
 model AddOn {
-  id       String  @id @default(uuid())
-  name     String
-  price    Decimal
-  isActive Boolean @default(true)
+  id        String   @id @default(uuid())
+  name      String
+  price     Decimal
+  quantity  Int      @default(0) // how many are available
+  unit      String? // e.g. "pcs", "sets"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  reservations ReservationAddOn[]
+  reservationAddOns ReservationAddOn[]
 }
 
 model ReservationAddOn {
-  id            String @id @default(uuid())
+  id            String      @id @default(uuid())
   reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
   addOnId       String
-  quantity      Int    @default(1)
-
-  reservation Reservation @relation(fields: [reservationId], references: [id])
-  addOn       AddOn       @relation(fields: [addOnId], references: [id])
+  addOn         AddOn       @relation(fields: [addOnId], references: [id])
+  quantity      Int         @default(1)
+  price         Decimal // snapshot of price at time of booking
 
   @@unique([reservationId, addOnId])
 }
