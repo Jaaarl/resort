@@ -126,3 +126,20 @@ export const getMovementsByItem = async (itemId: string) => {
     orderBy: { createdAt: "desc" },
   });
 };
+
+export const getAllMovements = async () => {
+  return await prisma.inventoryMovement.findMany({
+    include: {
+      item: true,
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};

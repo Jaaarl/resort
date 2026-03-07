@@ -106,3 +106,16 @@ export const getMovementsByItem = async (
     next(error);
   }
 };
+
+export const getAllMovements = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const movements = await inventoryService.getAllMovements();
+    res.json({ status: "ok", data: movements });
+  } catch (error) {
+    next(error);
+  }
+};

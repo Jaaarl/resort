@@ -11,6 +11,7 @@ const router = Router();
 
 router.get("/", inventoryController.getAllItems);
 router.get("/low-stock", inventoryController.getLowStockItems);
+router.get("/movements", inventoryController.getAllMovements);
 router.get("/:id", inventoryController.getItemById);
 router.get("/:id/movements", inventoryController.getMovementsByItem);
 router.post("/", validate(createInventoryItemSchema), inventoryController.createItem);
