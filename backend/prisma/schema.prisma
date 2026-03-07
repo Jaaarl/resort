@@ -278,4 +278,6 @@ model Feedback {
   customerName  String?
   customerEmail String?
   customerPhone String?
+
+  createdAt DateTime @default(now())
 }
