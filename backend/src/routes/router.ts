@@ -5,6 +5,7 @@ import reservationRoutes from "../modules/reservations/reservation.route";
 import poolRoutes from "../modules/pool/pool.routes";
 import maintenanceRoutes from "../modules/maintenance/maintenance.route";
 import inventoryRoutes from "../modules/inventory/inventory.route";
+import feedbackRoutes from "../modules/feedback/feedback.route";
 const router = Router();
 
 router.use("/auth", authRoutes);
@@ -13,6 +14,6 @@ router.use("/reservations", reservationRoutes);
 router.use("/pool", poolRoutes);
 router.use("/maintenance", maintenanceRoutes);
 router.use("/inventory", inventoryRoutes);
-// TODO: add other route modules here
+router.use("/feedback", feedbackRoutes);
 
 export default router;
