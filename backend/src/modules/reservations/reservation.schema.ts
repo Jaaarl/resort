@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+const reservationAddOnSchema = z.object({
+  addOnId: z.string().min(1, "Add-on ID is required"),
+  quantity: z.number().int().positive("Quantity must be positive"),
+});
+
 export const createReservationSchema = z
   .object({
     customerName: z.string().min(1, "Customer name is required"),
@@ -7,6 +12,7 @@ export const createReservationSchema = z
     customerEmail: z.string().email("Invalid email").optional(),
     customerLocation: z.string().optional(),
     type: z.enum(["ROOM", "POOL", "BOTH"]),
+    addOns: z.array(reservationAddOnSchema).optional(),
     totalPerson: z
       .number()
       .int()

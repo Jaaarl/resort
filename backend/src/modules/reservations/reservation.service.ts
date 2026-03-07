@@ -1,5 +1,6 @@
 import prisma from "../../lib/prisma";
 import { AppError } from "../../middleware/error";
+import { checkAddOnAvailability } from "../addons/addon.service";
 import {
   CreateReservationInput,
   UpdateReservationStatusInput,
@@ -98,7 +99,16 @@ export const createReservation = async (data: CreateReservationInput) => {
       throw new AppError("Pool slot is already reserved on this date", 409);
   }
 
-  return await prisma.reservation.create({
+    // ADDON availability check
+  if (data.addOns && data.addOns.length > 0) {
+    const date = data.type === "ROOM" ? data.checkIn! : data.poolDate!;
+
+    for (const addOn of data.addOns) {
+      await checkAddOnAvailability(addOn.addOnId, addOn.quantity, date);
+    }
+  }
+
+    return await prisma.reservation.create({
     data: {
       customerName: data.customerName,
       customerPhone: data.customerPhone,
@@ -110,13 +120,32 @@ export const createReservation = async (data: CreateReservationInput) => {
       checkIn: data.checkIn ? new Date(data.checkIn) : null,
       checkOut: data.checkOut ? new Date(data.checkOut) : null,
       poolSlotId: data.poolSlotId,
-      poolDate: data.poolDate ? new Date(data.poolDate) : null, // add this line
-      totalAmount: data.totalAmount,
+      poolDate: data.poolDate ? new Date(data.poolDate) : null,
+      totalAmount: data.totalAmount.toString(),
       status: "PENDING",
+      addOns: data.addOns && data.addOns.length > 0 ? {
+        create: await Promise.all(
+          data.addOns.map(async (addOn) => {
+            const addOnRecord = await prisma.addOn.findUnique({
+              where: { id: addOn.addOnId },
+            });
+            return {
+              addOnId: addOn.addOnId,
+              quantity: addOn.quantity,
+              price: addOnRecord!.price, // snapshot price
+            };
+          })
+        ),
+      } : undefined,
     },
     include: {
       room: true,
       poolSlot: true,
+      addOns: {
+        include: {
+          addOn: true,
+        },
+      },
     },
   });
 };
