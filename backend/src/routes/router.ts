@@ -6,7 +6,7 @@ import poolRoutes from "../modules/pool/pool.routes";
 import maintenanceRoutes from "../modules/maintenance/maintenance.route";
 import inventoryRoutes from "../modules/inventory/inventory.route";
 import feedbackRoutes from "../modules/feedback/feedback.route";
-import addonRoutes from "../modules/addon/addon.route";
+import addonRoutes from "../modules/addons/addon.route";
 const router = Router();
 
 router.use("/auth", authRoutes);
