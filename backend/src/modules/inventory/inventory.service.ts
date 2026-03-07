@@ -8,7 +8,10 @@ import {
 
 export const getAllItems = async (type?: "SHOP" | "MAINTENANCE") => {
   return await prisma.inventoryItem.findMany({
-    where: type ? { type } : undefined,
+    where: {
+      isActive: true,
+      ...(type ? { type } : {}),
+    },
     orderBy: { name: "asc" },
   });
 };
@@ -27,11 +30,13 @@ export const getItemById = async (id: string) => {
 export const getLowStockItems = async (type?: "SHOP" | "MAINTENANCE") => {
   return await prisma.inventoryItem.findMany({
     where: {
+      isActive: true,
       ...(type ? { type } : {}),
       quantity: { lte: prisma.inventoryItem.fields.lowStockAlert },
     },
   });
 };
+
 
 export const createItem = async (data: CreateInventoryItemInput) => {
   return await prisma.inventoryItem.create({
@@ -51,8 +56,9 @@ export const updateItem = async (id: string, data: UpdateInventoryItemInput) => 
 export const deleteItem = async (id: string) => {
   await getItemById(id);
 
-  return await prisma.inventoryItem.delete({
+  return await prisma.inventoryItem.update({
     where: { id },
+    data: { isActive: false },
   });
 };
 
@@ -98,7 +104,12 @@ export const createMovement = async (data: CreateMovementInput) => {
 };
 
 export const getMovementsByItem = async (itemId: string) => {
-  await getItemById(itemId);
+  // check if item exists regardless of isActive
+  const item = await prisma.inventoryItem.findUnique({
+    where: { id: itemId },
+  });
+
+  if (!item) throw new AppError("Inventory item not found", 404);
 
   return await prisma.inventoryMovement.findMany({
     where: { itemId },

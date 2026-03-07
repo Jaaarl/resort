@@ -60,8 +60,8 @@ enum InventoryType {
 }
 
 enum MovementType {
-  IN    // restock
-  OUT   // sold or used
+  IN // restock
+  OUT // sold or used
 }
 
 //////////////////////
@@ -78,10 +78,9 @@ model User {
 
   reservations Reservation[]
 
-
-  assignedTasks   MaintenanceTask[] @relation("TaskAssignedTo")
-  createdTasks    MaintenanceTask[] @relation("TaskCreatedBy")
-  inventoryMovements  InventoryMovement[]
+  assignedTasks      MaintenanceTask[]   @relation("TaskAssignedTo")
+  createdTasks       MaintenanceTask[]   @relation("TaskCreatedBy")
+  inventoryMovements InventoryMovement[]
 }
 
 //////////////////////
@@ -145,9 +144,9 @@ model Reservation {
   room   Room?   @relation(fields: [roomId], references: [id])
 
   // POOL
-  poolSlotId String?           // removed @unique
-  poolSlot   PoolSlot?         @relation(fields: [poolSlotId], references: [id])
-  poolDate   DateTime?         // which date they want the pool
+  poolSlotId String? // removed @unique
+  poolSlot   PoolSlot? @relation(fields: [poolSlotId], references: [id])
+  poolDate   DateTime? // which date they want the pool
 
   // STAFF USER
   userId String?
@@ -211,13 +210,14 @@ model InventoryItem {
   description   String?
   type          InventoryType
   quantity      Int           @default(0)
-  unit          String        // e.g. "pcs", "liters", "kg"
-  lowStockAlert Int           // alert when quantity falls below this
-  price         Decimal?      // only relevant for SHOP items
+  unit          String // e.g. "pcs", "liters", "kg"
+  lowStockAlert Int // alert when quantity falls below this
+  price         Decimal? // only relevant for SHOP items
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  isActive      Boolean       @default(true)
 
-  movements     InventoryMovement[]
+  movements InventoryMovement[]
 }
 
 model InventoryMovement {
@@ -226,12 +226,11 @@ model InventoryMovement {
   item        InventoryItem @relation(fields: [itemId], references: [id])
   type        MovementType
   quantity    Int
-  reason      String?       // e.g. "restocked", "sold", "used for maintenance"
+  reason      String? // e.g. "restocked", "sold", "used for maintenance"
   createdById String
   createdBy   User          @relation(fields: [createdById], references: [id])
   createdAt   DateTime      @default(now())
 }
-
 
 //////////////////////
 // MAINTENANCE
@@ -244,6 +243,7 @@ model MaintenanceLog {
   performedBy String?
   createdAt   DateTime        @default(now())
 }
+
 model MaintenanceTask {
   id          String        @id @default(uuid())
   title       String
@@ -252,21 +252,20 @@ model MaintenanceTask {
   status      TaskStatus    @default(PENDING)
   dueDate     DateTime
   completedAt DateTime?
-  remarks     String?       // optional, staff adds when completing
-  photoUrl    String?       // optional, proof photo
+  remarks     String? // optional, staff adds when completing
+  photoUrl    String? // optional, proof photo
 
   // assigned to
   assignedToId String
-  assignedTo   User     @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  assignedTo   User   @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
 
   // created by (admin only)
-  createdById  String
-  createdBy    User     @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  createdById String
+  createdBy   User   @relation("TaskCreatedBy", fields: [createdById], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
-
 
 //////////////////////
 // FEEDBACK
