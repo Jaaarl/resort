@@ -156,9 +156,8 @@ model Reservation {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  addOns    ReservationAddOn[]
-  payments  Payment[]
-  feedbacks Feedback[]
+  addOns   ReservationAddOn[]
+  payments Payment[]
 }
 
 //////////////////////
@@ -272,11 +271,11 @@ model MaintenanceTask {
 //////////////////////
 
 model Feedback {
-  id            String   @id @default(uuid())
-  reservationId String?
-  rating        Int
+  id            String  @id @default(uuid())
+  rating        Int // 1-5
   comment       String?
-  createdAt     DateTime @default(now())
-
-  reservation Reservation? @relation(fields: [reservationId], references: [id])
+  isAnonymous   Boolean @default(false)
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
 }
