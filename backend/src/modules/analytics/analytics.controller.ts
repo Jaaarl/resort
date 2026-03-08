@@ -121,3 +121,29 @@ export const getWalkInVsReservedRatio = async (
     next(error);
   }
 };
+
+export const getShopSalesReport = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { startDate, endDate } = req.query as {
+      startDate: string;
+      endDate: string;
+    };
+
+    if (!startDate || !endDate) {
+      res.status(400).json({
+        status: "error",
+        message: "startDate and endDate are required",
+      });
+      return;
+    }
+
+    const data = await analyticsService.getShopSalesReport(startDate, endDate);
+    res.json({ status: "ok", data });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -170,3 +170,56 @@ export const getWalkInVsReservedRatio = async (
     period: { startDate, endDate },
   };
 };
+
+export const getShopSalesReport = async (
+  startDate: string,
+  endDate: string,
+) => {
+  const movements = await prisma.inventoryMovement.findMany({
+    where: {
+      type: "OUT",
+      item: { type: "SHOP" },
+      createdAt: {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      },
+    },
+    include: {
+      item: true,
+    },
+  });
+
+  // group by item
+  const salesByItem = movements.reduce(
+    (acc, movement) => {
+      const itemName = movement.item.name;
+      if (!acc[itemName]) {
+        acc[itemName] = {
+          itemId: movement.itemId,
+          itemName,
+          unit: movement.item.unit,
+          totalQuantitySold: 0,
+          totalRevenue: 0,
+        };
+      }
+      acc[itemName].totalQuantitySold += movement.quantity;
+      acc[itemName].totalRevenue +=
+        movement.quantity * Number(movement.item.price);
+      return acc;
+    },
+    {} as Record<string, any>,
+  );
+
+  const totalRevenue = Object.values(salesByItem).reduce(
+    (sum: number, item: any) => sum + item.totalRevenue,
+    0,
+  );
+
+  return {
+    period: { startDate, endDate },
+    totalRevenue,
+    salesByItem: Object.values(salesByItem).sort(
+      (a: any, b: any) => b.totalQuantitySold - a.totalQuantitySold,
+    ),
+  };
+};

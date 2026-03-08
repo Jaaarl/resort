@@ -7,5 +7,6 @@ router.get("/occupancy/rooms", analyticsController.getRoomOccupancyRate);
 router.get("/occupancy/pool", analyticsController.getPoolOccupancyRate);
 router.get("/revenue", analyticsController.getRevenueReport);
 router.get("/walkin-vs-reserved", analyticsController.getWalkInVsReservedRatio);
+router.get("/shop-sales", analyticsController.getShopSalesReport);
 
 export default router;
