@@ -128,20 +128,28 @@ export const getShopSalesReport = async (
   next: NextFunction,
 ) => {
   try {
-    const { startDate, endDate } = req.query as {
-      startDate: string;
-      endDate: string;
+    const { period, date } = req.query as {
+      period: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+      date: string;
     };
 
-    if (!startDate || !endDate) {
+    if (!period || !date) {
       res.status(400).json({
         status: "error",
-        message: "startDate and endDate are required",
+        message: "period and date are required",
       });
       return;
     }
 
-    const data = await analyticsService.getShopSalesReport(startDate, endDate);
+    if (!["DAILY", "WEEKLY", "MONTHLY", "YEARLY"].includes(period)) {
+      res.status(400).json({
+        status: "error",
+        message: "period must be DAILY, WEEKLY, MONTHLY or YEARLY",
+      });
+      return;
+    }
+
+    const data = await analyticsService.getShopSalesReport(period, date);
     res.json({ status: "ok", data });
   } catch (error) {
     next(error);

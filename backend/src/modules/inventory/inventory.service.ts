@@ -37,14 +37,16 @@ export const getLowStockItems = async (type?: "SHOP" | "MAINTENANCE") => {
   });
 };
 
-
 export const createItem = async (data: CreateInventoryItemInput) => {
   return await prisma.inventoryItem.create({
     data,
   });
 };
 
-export const updateItem = async (id: string, data: UpdateInventoryItemInput) => {
+export const updateItem = async (
+  id: string,
+  data: UpdateInventoryItemInput,
+) => {
   await getItemById(id);
 
   return await prisma.inventoryItem.update({
@@ -69,7 +71,7 @@ export const createMovement = async (data: CreateMovementInput) => {
   if (data.type === "OUT" && item.quantity < data.quantity) {
     throw new AppError(
       `Insufficient stock — only ${item.quantity} ${item.unit} available`,
-      400
+      400,
     );
   }
 
@@ -91,13 +93,19 @@ export const createMovement = async (data: CreateMovementInput) => {
       type: data.type,
       quantity: data.quantity,
       reason: data.reason,
+      reasonType: data.reasonType,
       createdById: data.createdById,
     },
   });
 
   // check low stock after OUT movement
-  if (data.type === "OUT" && updatedItem.quantity <= updatedItem.lowStockAlert) {
-    console.warn(`⚠️ Low stock alert: ${updatedItem.name} has ${updatedItem.quantity} ${updatedItem.unit} remaining`);
+  if (
+    data.type === "OUT" &&
+    updatedItem.quantity <= updatedItem.lowStockAlert
+  ) {
+    console.warn(
+      `⚠️ Low stock alert: ${updatedItem.name} has ${updatedItem.quantity} ${updatedItem.unit} remaining`,
+    );
   }
 
   return { movement, updatedItem };

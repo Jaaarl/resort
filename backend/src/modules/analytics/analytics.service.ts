@@ -172,23 +172,48 @@ export const getWalkInVsReservedRatio = async (
 };
 
 export const getShopSalesReport = async (
-  startDate: string,
-  endDate: string,
+  period: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY",
+  date: string,
 ) => {
+  let startDate: Date;
+  let endDate: Date;
+
+  const baseDate = new Date(date);
+
+  if (period === "DAILY") {
+    startDate = new Date(baseDate.setHours(0, 0, 0, 0));
+    endDate = new Date(baseDate.setHours(23, 59, 59, 999));
+  } else if (period === "WEEKLY") {
+    const day = baseDate.getDay();
+    startDate = new Date(baseDate);
+    startDate.setDate(baseDate.getDate() - day);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+    endDate.setHours(23, 59, 59, 999);
+  } else if (period === "MONTHLY") {
+    startDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+    endDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
+    endDate.setHours(23, 59, 59, 999);
+  } else {
+    startDate = new Date(baseDate.getFullYear(), 0, 1);
+    endDate = new Date(baseDate.getFullYear(), 11, 31);
+    endDate.setHours(23, 59, 59, 999);
+  }
+
   const movements = await prisma.inventoryMovement.findMany({
     where: {
       type: "OUT",
-      reasonType: "SOLD", // ← only count actual sales
+      reasonType: "SOLD",
       item: { type: "SHOP" },
       createdAt: {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
+        gte: startDate,
+        lte: endDate,
       },
     },
     include: { item: true },
   });
 
-  // group by item
   const salesByItem = movements.reduce(
     (acc, movement) => {
       const itemName = movement.item.name;
@@ -215,7 +240,9 @@ export const getShopSalesReport = async (
   );
 
   return {
-    period: { startDate, endDate },
+    period,
+    startDate,
+    endDate,
     totalRevenue,
     salesByItem: Object.values(salesByItem).sort(
       (a: any, b: any) => b.totalQuantitySold - a.totalQuantitySold,
