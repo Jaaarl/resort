@@ -26,6 +26,7 @@ export const createReservationSchema = z
     totalPerson: z.number().int().positive(),
     totalAmount: z.number().positive(),
     addOns: z.array(reservationAddOnSchema).optional(),
+    isWalkIn: z.boolean().default(false),
 
     // replace roomId, checkIn, checkOut with rooms array
     rooms: z.array(roomReservationSchema).optional(),

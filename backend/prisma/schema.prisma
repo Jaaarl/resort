@@ -146,6 +146,7 @@ model Reservation {
   type             ReservationType
   status           ReservationStatus @default(PENDING)
   totalPerson      Int
+  isWalkIn         Boolean @default(false)
 
   // ROOM
   rooms  ReservationRoom[]

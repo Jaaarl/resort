@@ -153,7 +153,7 @@ export const getWalkInVsReservedRatio = async (
         gte: new Date(startDate),
         lte: new Date(endDate),
       },
-      userId: null, // walk-ins have no staff user assigned
+      isWalkIn: true,
     },
   });
 
