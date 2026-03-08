@@ -10,6 +10,12 @@ const poolSlotReservationSchema = z.object({
   poolDate: z.string().datetime(),
 });
 
+const roomReservationSchema = z.object({
+  roomId: z.string().min(1, "Room ID is required"),
+  checkIn: z.string().datetime(),
+  checkOut: z.string().datetime(),
+});
+
 export const createReservationSchema = z
   .object({
     customerName: z.string().min(1, "Customer name is required"),
@@ -17,35 +23,28 @@ export const createReservationSchema = z
     customerEmail: z.string().email("Invalid email").optional(),
     customerLocation: z.string().optional(),
     type: z.enum(["ROOM", "POOL", "BOTH"]),
+    totalPerson: z.number().int().positive(),
+    totalAmount: z.number().positive(),
     addOns: z.array(reservationAddOnSchema).optional(),
-    totalPerson: z
-      .number()
-      .int()
-      .positive("Total person must be a positive number"),
 
-    // ROOM fields
-    roomId: z.string().optional(),
-    checkIn: z.string().datetime().optional(),
-    checkOut: z.string().datetime().optional(),
+    // replace roomId, checkIn, checkOut with rooms array
+    rooms: z.array(roomReservationSchema).optional(),
 
-    // POOL fields
-    // POOL fields
+    // pool
     poolSlots: z.array(poolSlotReservationSchema).optional(),
-    totalAmount: z.number().positive("Total amount must be positive"),
   })
   .refine(
     (data) => {
       if (data.type === "ROOM") {
-        return !!data.roomId && !!data.checkIn && !!data.checkOut;
+        return !!data.rooms && data.rooms.length > 0;
       }
       if (data.type === "POOL") {
         return !!data.poolSlots && data.poolSlots.length > 0;
       }
       if (data.type === "BOTH") {
         return (
-          !!data.roomId &&
-          !!data.checkIn &&
-          !!data.checkOut &&
+          !!data.rooms &&
+          data.rooms.length > 0 &&
           !!data.poolSlots &&
           data.poolSlots.length > 0
         );

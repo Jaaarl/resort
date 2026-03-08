@@ -95,7 +95,17 @@ model Room {
   capacity    Int
   isActive    Boolean @default(true)
 
-  reservations Reservation[]
+  reservationRooms ReservationRoom[]
+}
+
+model ReservationRoom {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  roomId        String
+  room          Room        @relation(fields: [roomId], references: [id])
+  checkIn       DateTime
+  checkOut      DateTime
 }
 
 //////////////////////
@@ -135,13 +145,10 @@ model Reservation {
   customerEmail    String?
   type             ReservationType
   status           ReservationStatus @default(PENDING)
-  checkIn          DateTime? // add this
-  checkOut         DateTime?
   totalPerson      Int
 
   // ROOM
-  roomId String?
-  room   Room?   @relation(fields: [roomId], references: [id])
+  rooms  ReservationRoom[]
 
   // POOL
   poolSlots ReservationPoolSlot[]

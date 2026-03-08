@@ -30,8 +30,12 @@ export const getAddOnAvailability = async (addOnId: string, date: string) => {
         status: { notIn: ["CANCELLED"] },
         OR: [
           {
-            checkIn: { lte: new Date(date) },
-            checkOut: { gte: new Date(date) },
+            rooms: {
+              some: {
+                checkIn: { lte: new Date(date) },
+                checkOut: { gte: new Date(date) },
+              },
+            },
           },
           {
             poolSlots: {

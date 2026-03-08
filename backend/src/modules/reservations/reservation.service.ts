@@ -9,11 +9,9 @@ import {
 export const getAllReservations = async () => {
   return await prisma.reservation.findMany({
     include: {
-      room: true,
-      poolSlots: {
-        include: { poolSlot: true },
-      },
-      addOns: true,
+      rooms: { include: { room: true } },
+      poolSlots: { include: { poolSlot: true } },
+      addOns: { include: { addOn: true } },
     },
   });
 };
@@ -22,13 +20,9 @@ export const getReservationById = async (id: string) => {
   const reservation = await prisma.reservation.findUnique({
     where: { id },
     include: {
-      room: true,
-      poolSlots: {
-        include: { poolSlot: true }, // ← updated
-      },
-      addOns: {
-        include: { addOn: true },
-      },
+      rooms: { include: { room: true } },
+      poolSlots: { include: { poolSlot: true } },
+      addOns: { include: { addOn: true } },
     },
   });
 
@@ -40,31 +34,39 @@ export const getReservationById = async (id: string) => {
 export const createReservation = async (data: CreateReservationInput) => {
   // ROOM conflict detection
   if (data.type === "ROOM" || data.type === "BOTH") {
-    const room = await prisma.room.findUnique({
-      where: { id: data.roomId! },
-    });
-
-    if (!room) throw new AppError("Room not found", 404);
-    if (!room.isActive) throw new AppError("Room is not available", 400);
-
-    if (data.totalPerson > room.capacity) {
-      throw new AppError(`Room capacity is ${room.capacity} persons only`, 400);
+    if (!data.rooms || data.rooms.length === 0) {
+      throw new AppError("At least one room is required", 400);
     }
 
-    // check for overlapping reservations
-    const conflict = await prisma.reservation.findFirst({
-      where: {
-        roomId: data.roomId,
-        status: { notIn: ["CANCELLED"] },
-        AND: [
-          { checkIn: { lt: new Date(data.checkOut!) } },
-          { checkOut: { gt: new Date(data.checkIn!) } },
-        ],
-      },
-    });
+    for (const roomData of data.rooms) {
+      const room = await prisma.room.findUnique({
+        where: { id: roomData.roomId },
+      });
 
-    if (conflict)
-      throw new AppError("Room is already booked for these dates", 409);
+      if (!room) throw new AppError("Room not found", 404);
+      if (!room.isActive) throw new AppError("Room is not available", 400);
+
+      if (data.totalPerson > room.capacity) {
+        throw new AppError(
+          `Room capacity is ${room.capacity} persons only`,
+          400,
+        );
+      }
+
+      const conflict = await prisma.reservationRoom.findFirst({
+        where: {
+          roomId: roomData.roomId,
+          reservation: { status: { notIn: ["CANCELLED"] } },
+          AND: [
+            { checkIn: { lt: new Date(roomData.checkOut) } },
+            { checkOut: { gt: new Date(roomData.checkIn) } },
+          ],
+        },
+      });
+
+      if (conflict)
+        throw new AppError(`Room is already booked for these dates`, 409);
+    }
   }
 
   // POOL conflict detection
@@ -119,7 +121,9 @@ export const createReservation = async (data: CreateReservationInput) => {
   // ADDON availability check
   if (data.addOns && data.addOns.length > 0) {
     const date =
-      data.type === "ROOM" ? data.checkIn! : data.poolSlots![0].poolDate;
+      data.type === "ROOM"
+        ? data.rooms![0].checkIn // ← change this
+        : data.poolSlots![0].poolDate; // ← and this
 
     for (const addOn of data.addOns) {
       await checkAddOnAvailability(addOn.addOnId, addOn.quantity, date);
@@ -134,11 +138,18 @@ export const createReservation = async (data: CreateReservationInput) => {
       customerLocation: data.customerLocation,
       type: data.type,
       totalPerson: data.totalPerson,
-      roomId: data.roomId,
-      checkIn: data.checkIn ? new Date(data.checkIn) : null,
-      checkOut: data.checkOut ? new Date(data.checkOut) : null,
       totalAmount: data.totalAmount.toString(),
       status: "PENDING",
+      rooms:
+        data.rooms && data.rooms.length > 0
+          ? {
+              create: data.rooms.map((room) => ({
+                roomId: room.roomId,
+                checkIn: new Date(room.checkIn),
+                checkOut: new Date(room.checkOut),
+              })),
+            }
+          : undefined,
       poolSlots:
         data.poolSlots && data.poolSlots.length > 0
           ? {
@@ -167,13 +178,9 @@ export const createReservation = async (data: CreateReservationInput) => {
           : undefined,
     },
     include: {
-      room: true,
-      poolSlots: {
-        include: { poolSlot: true },
-      },
-      addOns: {
-        include: { addOn: true },
-      },
+      rooms: { include: { room: true } },
+      poolSlots: { include: { poolSlot: true } },
+      addOns: { include: { addOn: true } },
     },
   });
 };
