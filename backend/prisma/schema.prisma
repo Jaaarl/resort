@@ -64,6 +64,14 @@ enum MovementType {
   OUT // sold or used
 }
 
+enum MovementReason {
+  SOLD
+  EXPIRED
+  DAMAGED
+  USED        // for maintenance items
+  ADJUSTMENT  // manual correction
+}
+
 //////////////////////
 // USER
 //////////////////////
@@ -247,6 +255,7 @@ model InventoryMovement {
   type        MovementType
   quantity    Int
   reason      String? // e.g. "restocked", "sold", "used for maintenance"
+  reasonType  MovementReason?
   createdById String
   createdBy   User          @relation(fields: [createdById], references: [id])
   createdAt   DateTime      @default(now())

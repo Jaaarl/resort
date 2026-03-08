@@ -18,8 +18,15 @@ export const createMovementSchema = z.object({
   quantity: z.number().int().positive("Quantity must be positive"),
   reason: z.string().optional(),
   createdById: z.string().min(1, "Creator is required"),
+  reasonType: z
+    .enum(["SOLD", "EXPIRED", "DAMAGED", "USED", "ADJUSTMENT"])
+    .optional(),
 });
 
-export type CreateInventoryItemInput = z.infer<typeof createInventoryItemSchema>;
-export type UpdateInventoryItemInput = z.infer<typeof updateInventoryItemSchema>;
+export type CreateInventoryItemInput = z.infer<
+  typeof createInventoryItemSchema
+>;
+export type UpdateInventoryItemInput = z.infer<
+  typeof updateInventoryItemSchema
+>;
 export type CreateMovementInput = z.infer<typeof createMovementSchema>;

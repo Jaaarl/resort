@@ -178,15 +178,14 @@ export const getShopSalesReport = async (
   const movements = await prisma.inventoryMovement.findMany({
     where: {
       type: "OUT",
+      reasonType: "SOLD", // ← only count actual sales
       item: { type: "SHOP" },
       createdAt: {
         gte: new Date(startDate),
         lte: new Date(endDate),
       },
     },
-    include: {
-      item: true,
-    },
+    include: { item: true },
   });
 
   // group by item
