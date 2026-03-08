@@ -38,11 +38,13 @@ export const getPoolSlotAvailability = async (date: string) => {
       });
 
       // check if already reserved on this date
-      const isReserved = await prisma.reservation.findFirst({
+      const isReserved = await prisma.reservationPoolSlot.findFirst({
         where: {
           poolSlotId: slot.id,
           poolDate: new Date(date),
-          status: { notIn: ["CANCELLED"] },
+          reservation: {
+            status: { notIn: ["CANCELLED"] },
+          },
         },
       });
 
@@ -106,11 +108,12 @@ export const disablePoolSlot = async (data: DisablePoolSlotInput) => {
   });
 
   if (slot) {
-    const isReserved = await prisma.reservation.findFirst({
+    const isReserved = await prisma.reservationPoolSlot.findUnique({
       where: {
-        poolSlotId: slot.id,
-        poolDate: new Date(data.date),
-        status: { notIn: ["CANCELLED"] },
+        poolSlotId_poolDate: {
+          poolSlotId: slot.id,
+          poolDate: new Date(data.date),
+        },
       },
     });
 

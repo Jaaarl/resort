@@ -10,7 +10,9 @@ export const getAllReservations = async () => {
   return await prisma.reservation.findMany({
     include: {
       room: true,
-      poolSlot: true,
+      poolSlots: {
+        include: { poolSlot: true },
+      },
       addOns: true,
     },
   });
@@ -21,8 +23,12 @@ export const getReservationById = async (id: string) => {
     where: { id },
     include: {
       room: true,
-      poolSlot: true,
-      addOns: true,
+      poolSlots: {
+        include: { poolSlot: true }, // ← updated
+      },
+      addOns: {
+        include: { addOn: true },
+      },
     },
   });
 
@@ -63,52 +69,64 @@ export const createReservation = async (data: CreateReservationInput) => {
 
   // POOL conflict detection
   if (data.type === "POOL" || data.type === "BOTH") {
-    const poolSlot = await prisma.poolSlot.findUnique({
-      where: { id: data.poolSlotId! },
-    });
-
-    if (!poolSlot) throw new AppError("Pool slot not found", 404);
-
-    // check if disabled on this date
-    const isDisabled = await prisma.poolSlotDisabled.findUnique({
-      where: {
-        label_date: {
-          label: poolSlot.label,
-          date: new Date(data.poolDate!),
-        },
-      },
-    });
-
-    if (isDisabled) {
-      throw new AppError(
-        `${poolSlot.label} slot is not available on this date${isDisabled.reason ? `: ${isDisabled.reason}` : ""}`,
-        400,
-      );
+    if (!data.poolSlots || data.poolSlots.length === 0) {
+      throw new AppError("At least one pool slot is required", 400);
     }
 
-    // check if already reserved on this date
-    const poolConflict = await prisma.reservation.findFirst({
-      where: {
-        poolSlotId: data.poolSlotId,
-        poolDate: new Date(data.poolDate!),
-        status: { notIn: ["CANCELLED"] },
-      },
-    });
+    for (const slot of data.poolSlots) {
+      const poolSlot = await prisma.poolSlot.findUnique({
+        where: { id: slot.poolSlotId },
+      });
 
-    if (poolConflict)
-      throw new AppError("Pool slot is already reserved on this date", 409);
+      if (!poolSlot) throw new AppError("Pool slot not found", 404);
+
+      // check if disabled on this date
+      const isDisabled = await prisma.poolSlotDisabled.findUnique({
+        where: {
+          label_date: {
+            label: poolSlot.label,
+            date: new Date(slot.poolDate),
+          },
+        },
+      });
+
+      if (isDisabled) {
+        throw new AppError(
+          `${poolSlot.label} slot is not available on this date${isDisabled.reason ? `: ${isDisabled.reason}` : ""}`,
+          400,
+        );
+      }
+
+      // check if already reserved
+      const conflict = await prisma.reservationPoolSlot.findUnique({
+        where: {
+          poolSlotId_poolDate: {
+            poolSlotId: slot.poolSlotId,
+            poolDate: new Date(slot.poolDate),
+          },
+        },
+      });
+
+      if (conflict) {
+        throw new AppError(
+          `${poolSlot.label} slot is already reserved on this date`,
+          409,
+        );
+      }
+    }
   }
 
-    // ADDON availability check
+  // ADDON availability check
   if (data.addOns && data.addOns.length > 0) {
-    const date = data.type === "ROOM" ? data.checkIn! : data.poolDate!;
+    const date =
+      data.type === "ROOM" ? data.checkIn! : data.poolSlots![0].poolDate;
 
     for (const addOn of data.addOns) {
       await checkAddOnAvailability(addOn.addOnId, addOn.quantity, date);
     }
   }
 
-    return await prisma.reservation.create({
+  return await prisma.reservation.create({
     data: {
       customerName: data.customerName,
       customerPhone: data.customerPhone,
@@ -119,32 +137,42 @@ export const createReservation = async (data: CreateReservationInput) => {
       roomId: data.roomId,
       checkIn: data.checkIn ? new Date(data.checkIn) : null,
       checkOut: data.checkOut ? new Date(data.checkOut) : null,
-      poolSlotId: data.poolSlotId,
-      poolDate: data.poolDate ? new Date(data.poolDate) : null,
       totalAmount: data.totalAmount.toString(),
       status: "PENDING",
-      addOns: data.addOns && data.addOns.length > 0 ? {
-        create: await Promise.all(
-          data.addOns.map(async (addOn) => {
-            const addOnRecord = await prisma.addOn.findUnique({
-              where: { id: addOn.addOnId },
-            });
-            return {
-              addOnId: addOn.addOnId,
-              quantity: addOn.quantity,
-              price: addOnRecord!.price, // snapshot price
-            };
-          })
-        ),
-      } : undefined,
+      poolSlots:
+        data.poolSlots && data.poolSlots.length > 0
+          ? {
+              create: data.poolSlots.map((slot) => ({
+                poolSlotId: slot.poolSlotId,
+                poolDate: new Date(slot.poolDate),
+              })),
+            }
+          : undefined,
+      addOns:
+        data.addOns && data.addOns.length > 0
+          ? {
+              create: await Promise.all(
+                data.addOns.map(async (addOn) => {
+                  const addOnRecord = await prisma.addOn.findUnique({
+                    where: { id: addOn.addOnId },
+                  });
+                  return {
+                    addOnId: addOn.addOnId,
+                    quantity: addOn.quantity,
+                    price: addOnRecord!.price,
+                  };
+                }),
+              ),
+            }
+          : undefined,
     },
     include: {
       room: true,
-      poolSlot: true,
+      poolSlots: {
+        include: { poolSlot: true },
+      },
       addOns: {
-        include: {
-          addOn: true,
-        },
+        include: { addOn: true },
       },
     },
   });

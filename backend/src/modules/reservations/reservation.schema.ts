@@ -5,6 +5,11 @@ const reservationAddOnSchema = z.object({
   quantity: z.number().int().positive("Quantity must be positive"),
 });
 
+const poolSlotReservationSchema = z.object({
+  poolSlotId: z.string().min(1, "Pool slot ID is required"),
+  poolDate: z.string().datetime(),
+});
+
 export const createReservationSchema = z
   .object({
     customerName: z.string().min(1, "Customer name is required"),
@@ -25,10 +30,8 @@ export const createReservationSchema = z
 
     // POOL fields
     // POOL fields
-    poolSlotId: z.string().optional(),
-
+    poolSlots: z.array(poolSlotReservationSchema).optional(),
     totalAmount: z.number().positive("Total amount must be positive"),
-    poolDate: z.string().datetime().optional(), // add this
   })
   .refine(
     (data) => {
@@ -36,14 +39,15 @@ export const createReservationSchema = z
         return !!data.roomId && !!data.checkIn && !!data.checkOut;
       }
       if (data.type === "POOL") {
-        return !!data.poolSlotId;
+        return !!data.poolSlots && data.poolSlots.length > 0;
       }
       if (data.type === "BOTH") {
         return (
           !!data.roomId &&
           !!data.checkIn &&
           !!data.checkOut &&
-          !!data.poolSlotId
+          !!data.poolSlots &&
+          data.poolSlots.length > 0
         );
       }
       return true;

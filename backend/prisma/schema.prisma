@@ -110,7 +110,7 @@ model PoolSlot {
   capacity  Int
   price     Decimal
 
-  reservations Reservation[]
+  reservationSlots ReservationPoolSlot[]
 }
 
 model PoolSlotDisabled {
@@ -144,9 +144,7 @@ model Reservation {
   room   Room?   @relation(fields: [roomId], references: [id])
 
   // POOL
-  poolSlotId String? // removed @unique
-  poolSlot   PoolSlot? @relation(fields: [poolSlotId], references: [id])
-  poolDate   DateTime? // which date they want the pool
+  poolSlots ReservationPoolSlot[]
 
   // STAFF USER
   userId String?
@@ -158,6 +156,17 @@ model Reservation {
 
   addOns   ReservationAddOn[]
   payments Payment[]
+}
+
+model ReservationPoolSlot {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  poolSlotId    String
+  poolSlot      PoolSlot    @relation(fields: [poolSlotId], references: [id])
+  poolDate      DateTime
+
+  @@unique([poolSlotId, poolDate]) // prevent double booking per slot per date
 }
 
 //////////////////////

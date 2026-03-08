@@ -29,8 +29,17 @@ export const getAddOnAvailability = async (addOnId: string, date: string) => {
       reservation: {
         status: { notIn: ["CANCELLED"] },
         OR: [
-          { checkIn: { lte: new Date(date) }, checkOut: { gte: new Date(date) } },
-          { poolDate: new Date(date) },
+          {
+            checkIn: { lte: new Date(date) },
+            checkOut: { gte: new Date(date) },
+          },
+          {
+            poolSlots: {
+              some: {
+                poolDate: new Date(date),
+              },
+            },
+          },
         ],
       },
     },
@@ -52,14 +61,14 @@ export const getAddOnAvailability = async (addOnId: string, date: string) => {
 export const checkAddOnAvailability = async (
   addOnId: string,
   quantity: number,
-  date: string
+  date: string,
 ) => {
   const availability = await getAddOnAvailability(addOnId, date);
 
   if (quantity > availability.availableQuantity) {
     throw new AppError(
       `Only ${availability.availableQuantity} ${availability.addOn.unit ?? "units"} of ${availability.addOn.name} available on this date`,
-      400
+      400,
     );
   }
 
