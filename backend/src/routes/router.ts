@@ -7,6 +7,7 @@ import maintenanceRoutes from "../modules/maintenance/maintenance.route";
 import inventoryRoutes from "../modules/inventory/inventory.route";
 import feedbackRoutes from "../modules/feedback/feedback.route";
 import addonRoutes from "../modules/addons/addon.route";
+import analyticsRoutes from "../modules/analytics/analytics.route";
 const router = Router();
 
 router.use("/auth", authRoutes);
@@ -17,4 +18,5 @@ router.use("/maintenance", maintenanceRoutes);
 router.use("/inventory", inventoryRoutes);
 router.use("/feedback", feedbackRoutes);
 router.use("/addons", addonRoutes);
+router.use("/analytics", analyticsRoutes);
 export default router;
