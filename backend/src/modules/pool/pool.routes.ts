@@ -6,26 +6,45 @@ import {
   updatePoolSlotSchema,
   disablePoolSlotSchema,
 } from "./pool.schema";
+import { authenticate, authorize } from "../../middleware/auth";
 
 const router = Router();
 
-router.get("/", poolController.getAllPoolSlots);
-router.get("/availability/:date", poolController.getPoolSlotAvailability);
-router.get("/:id", poolController.getPoolSlotById);
-router.post("/", validate(createPoolSlotSchema), poolController.createPoolSlot);
+router.get("/", authenticate, poolController.getAllPoolSlots);
+router.get("/availability/:date", poolController.getPoolSlotAvailability); // public
+router.get("/:id", authenticate, poolController.getPoolSlotById);
+router.post(
+  "/",
+  authenticate,
+  authorize("ADMIN"),
+  validate(createPoolSlotSchema),
+  poolController.createPoolSlot,
+);
 router.put(
   "/:id",
+  authenticate,
+  authorize("ADMIN"),
   validate(updatePoolSlotSchema),
   poolController.updatePoolSlot,
 );
-router.delete("/:id", poolController.deletePoolSlot);
-
-// disable/enable routes
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("ADMIN"),
+  poolController.deletePoolSlot,
+);
 router.post(
   "/disable",
+  authenticate,
+  authorize("ADMIN"),
   validate(disablePoolSlotSchema),
   poolController.disablePoolSlot,
 );
-router.delete("/enable/:label/:date", poolController.enablePoolSlot);
+router.delete(
+  "/enable/:label/:date",
+  authenticate,
+  authorize("ADMIN"),
+  poolController.enablePoolSlot,
+);
 
 export default router;

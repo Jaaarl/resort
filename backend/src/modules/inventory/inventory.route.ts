@@ -6,17 +6,44 @@ import {
   updateInventoryItemSchema,
   createMovementSchema,
 } from "./inventory.schema";
+import { authenticate, authorize } from "../../middleware/auth";
 
 const router = Router();
 
-router.get("/", inventoryController.getAllItems);
-router.get("/low-stock", inventoryController.getLowStockItems);
-router.get("/movements", inventoryController.getAllMovements);
-router.get("/:id", inventoryController.getItemById);
-router.get("/:id/movements", inventoryController.getMovementsByItem);
-router.post("/", validate(createInventoryItemSchema), inventoryController.createItem);
-router.post("/movements", validate(createMovementSchema), inventoryController.createMovement);
-router.put("/:id", validate(updateInventoryItemSchema), inventoryController.updateItem);
-router.delete("/:id", inventoryController.deleteItem);
+router.get("/", authenticate, inventoryController.getAllItems);
+router.get("/low-stock", authenticate, inventoryController.getLowStockItems);
+router.get("/movements", authenticate, inventoryController.getAllMovements);
+router.get("/:id", authenticate, inventoryController.getItemById);
+router.get(
+  "/:id/movements",
+  authenticate,
+  inventoryController.getMovementsByItem,
+);
+router.post(
+  "/",
+  authenticate,
+  authorize("ADMIN"),
+  validate(createInventoryItemSchema),
+  inventoryController.createItem,
+);
+router.post(
+  "/movements",
+  authenticate,
+  validate(createMovementSchema),
+  inventoryController.createMovement,
+);
+router.put(
+  "/:id",
+  authenticate,
+  authorize("ADMIN"),
+  validate(updateInventoryItemSchema),
+  inventoryController.updateItem,
+);
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("ADMIN"),
+  inventoryController.deleteItem,
+);
 
 export default router;
