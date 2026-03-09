@@ -4,7 +4,7 @@ import prisma from "../lib/prisma";
 
 export interface AuthRequest extends Request {
   user?: {
-    id: string;
+    userId: string;
     role: string;
   };
 }
@@ -23,12 +23,12 @@ export const authenticate = async (
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      id: string;
+      userId: string;
       role: string;
     };
 
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
+      where: { id: decoded.userId },
       select: { id: true, role: true },
     });
 
@@ -37,7 +37,10 @@ export const authenticate = async (
       return;
     }
 
-    req.user = user;
+    req.user = {
+      userId: user.id,
+      role: user.role,
+    };
     next();
   } catch (error) {
     res.status(401).json({ status: "error", message: "Invalid token" });
