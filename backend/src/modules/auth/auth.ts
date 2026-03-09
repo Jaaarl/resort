@@ -12,7 +12,9 @@ router.post("/register", async (req, res) => {
   const { name, email, password, role } = req.body;
 
   if (!name || !email || !password) {
-    return res.status(400).json({ error: "Name, email, and password are required" });
+    return res
+      .status(400)
+      .json({ error: "Name, email, and password are required" });
   }
 
   try {
@@ -25,7 +27,12 @@ router.post("/register", async (req, res) => {
         role: role && Object.values(Role).includes(role) ? role : Role.STAFF,
       },
     });
-    res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });
+    res.status(201).json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
   } catch (error: any) {
     if (error.code === "P2002") {
       // Unique constraint failed
@@ -50,16 +57,32 @@ router.post("/login", async (req, res) => {
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) return res.status(401).json({ error: "Invalid credentials" });
 
-  const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET!, {
-    expiresIn: "7d",
-  });
+  const token = jwt.sign(
+    { userId: user.id, role: user.role },
+    process.env.JWT_SECRET!,
+    {
+      expiresIn: "7d",
+    },
+  );
 
-  res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+  res.json({
+    token,
+    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+  });
 });
 
-
 router.get("/me", authenticate, async (req: AuthRequest, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  const user = await prisma.user.findUnique({
+    where: { id: req.user?.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      // password excluded
+    },
+  });
   res.json(user);
 });
 
