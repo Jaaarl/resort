@@ -5,6 +5,7 @@ import cors from "cors";
 import prisma from "./lib/prisma";
 import router from "./routes/router";
 import { errorHandler } from "./middleware/error";
+import { authLimiter } from "./middleware/rateLimit";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,7 +21,7 @@ app.use(
 
 // Middleware
 app.use(express.json());
-
+app.use(authLimiter);
 // Health check
 app.get("/health", async (req, res) => {
   try {

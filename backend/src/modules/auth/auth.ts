@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import prisma from "../../lib/prisma";
 import { authenticate, AuthRequest } from "../../middleware/auth";
 import { Role } from "../../generated/prisma/enums";
+import { authLimiter } from "../../middleware/rateLimit";
 
 const router = Router();
 
@@ -44,7 +45,7 @@ router.post("/register", async (req, res) => {
 });
 
 // Login
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
