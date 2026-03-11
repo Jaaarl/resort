@@ -28,5 +28,6 @@ router.patch(
   authenticate,
   reservationController.cancelReservation,
 );
+router.put("/:id", authenticate, reservationController.updateReservation);
 
 export default router;

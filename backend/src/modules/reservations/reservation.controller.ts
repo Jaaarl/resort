@@ -4,7 +4,7 @@ import * as reservationService from "./reservation.service";
 export const getAllReservations = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const reservations = await reservationService.getAllReservations();
@@ -17,10 +17,12 @@ export const getAllReservations = async (
 export const getReservationById = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const reservation = await reservationService.getReservationById(req.params.id as string);
+    const reservation = await reservationService.getReservationById(
+      req.params.id as string,
+    );
     res.json({ status: "ok", data: reservation });
   } catch (error) {
     next(error);
@@ -30,7 +32,7 @@ export const getReservationById = async (
 export const createReservation = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const reservation = await reservationService.createReservation(req.body);
@@ -43,12 +45,12 @@ export const createReservation = async (
 export const updateReservationStatus = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const reservation = await reservationService.updateReservationStatus(
       req.params.id as string,
-      req.body
+      req.body,
     );
     res.json({ status: "ok", data: reservation });
   } catch (error) {
@@ -59,11 +61,27 @@ export const updateReservationStatus = async (
 export const cancelReservation = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     await reservationService.cancelReservation(req.params.id as string);
     res.json({ status: "ok", message: "Reservation cancelled successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateReservation = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const reservation = await reservationService.updateReservation(
+      req.params.id as string,
+      req.body,
+    );
+    res.json({ status: "ok", data: reservation });
   } catch (error) {
     next(error);
   }

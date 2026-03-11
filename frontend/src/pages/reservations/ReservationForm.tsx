@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { reservationsApi } from "../../api/reservations";
+import { reservationsApi, type Reservation } from "../../api/reservations";
 import { roomsApi } from "../../api/rooms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,25 +25,34 @@ const reservationSchema = z.object({
   totalPerson: z.coerce.number().int().positive(),
   totalAmount: z.coerce.number().positive(),
   isWalkIn: z.boolean().default(false),
+  status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]).optional(),
 });
 
 type ReservationFormInput = z.infer<typeof reservationSchema>;
 
-export default function ReservationForm({
-  onSuccess,
-}: {
+interface Props {
+  reservation?: Reservation;
   onSuccess: () => void;
-}) {
-  const [type, setType] = useState<"ROOM" | "POOL" | "BOTH">("ROOM");
+}
+
+export default function ReservationForm({ reservation, onSuccess }: Props) {
+  const isEditing = !!reservation;
+  const [type, setType] = useState<"ROOM" | "POOL" | "BOTH">(
+    reservation?.type || "ROOM",
+  );
 
   const { data: rooms } = useQuery({
     queryKey: ["rooms"],
     queryFn: () => roomsApi.getAll().then((res) => res.data.data),
   });
 
-  const [selectedRooms, setSelectedRooms] = useState([
-    { roomId: "", checkIn: "", checkOut: "" },
-  ]);
+  const [selectedRooms, setSelectedRooms] = useState(
+    reservation?.rooms?.map((r) => ({
+      roomId: r.roomId,
+      checkIn: new Date(r.checkIn).toISOString().split("T")[0],
+      checkOut: new Date(r.checkOut).toISOString().split("T")[0],
+    })) || [{ roomId: "", checkIn: "", checkOut: "" }],
+  );
 
   const {
     register,
@@ -52,7 +61,17 @@ export default function ReservationForm({
     formState: { errors },
   } = useForm<ReservationFormInput>({
     resolver: zodResolver(reservationSchema),
-    defaultValues: { type: "ROOM", isWalkIn: false },
+    defaultValues: {
+      customerName: reservation?.customerName || "",
+      customerPhone: reservation?.customerPhone || "",
+      customerEmail: reservation?.customerEmail || "",
+      customerLocation: reservation?.customerLocation || "",
+      type: reservation?.type || "ROOM",
+      totalPerson: reservation?.totalPerson || 1,
+      totalAmount: reservation?.totalAmount || 0,
+      isWalkIn: reservation?.isWalkIn || false,
+      status: reservation?.status || "PENDING",
+    },
   });
 
   const createMutation = useMutation({
@@ -60,17 +79,49 @@ export default function ReservationForm({
     onSuccess,
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      reservationsApi.update(id, data),
+    onSuccess,
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      reservationsApi.updateStatus(id, status),
+    onSuccess,
+  });
+
   const onSubmit = (data: ReservationFormInput) => {
-    createMutation.mutate({
-      ...data,
-      rooms: type === "ROOM" || type === "BOTH" ? selectedRooms : undefined,
-    });
+    if (isEditing && reservation) {
+      // update reservation details
+      updateMutation.mutate({ id: reservation.id, data });
+
+      // also update status if changed
+      if (data.status && data.status !== reservation.status) {
+        updateStatusMutation.mutate({
+          id: reservation.id,
+          status: data.status,
+        });
+      }
+    } else {
+      createMutation.mutate({
+        ...data,
+        rooms:
+          type === "ROOM" || type === "BOTH"
+            ? selectedRooms.map((r) => ({
+                ...r,
+                checkIn: new Date(r.checkIn + "T00:00:00.000Z").toISOString(),
+                checkOut: new Date(r.checkOut + "T00:00:00.000Z").toISOString(),
+              }))
+            : undefined,
+      });
+    }
   };
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 max-h-96 overflow-y-auto pr-2"
+      className="space-y-4 max-h-[70vh] overflow-y-auto pr-2"
     >
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -109,6 +160,7 @@ export default function ReservationForm({
           <Label>Type</Label>
           <Select
             value={type}
+            disabled={isEditing}
             onValueChange={(val: "ROOM" | "POOL" | "BOTH") => {
               setType(val);
               setValue("type", val);
@@ -127,20 +179,14 @@ export default function ReservationForm({
         <div className="space-y-2">
           <Label>Total Persons</Label>
           <Input {...register("totalPerson")} type="number" />
-          {errors.totalPerson && (
-            <p className="text-sm text-red-500">{errors.totalPerson.message}</p>
-          )}
         </div>
         <div className="space-y-2">
           <Label>Total Amount</Label>
           <Input {...register("totalAmount")} type="number" />
-          {errors.totalAmount && (
-            <p className="text-sm text-red-500">{errors.totalAmount.message}</p>
-          )}
         </div>
       </div>
 
-      {/* Walk-in checkbox */}
+      {/* Walk-in */}
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
@@ -154,10 +200,11 @@ export default function ReservationForm({
       {/* Room fields */}
       {(type === "ROOM" || type === "BOTH") && (
         <div className="space-y-2">
-          <Label>Room</Label>
-          {selectedRooms.map((_, index) => (
+          <Label>Rooms</Label>
+          {selectedRooms.map((room, index) => (
             <div key={index} className="grid grid-cols-3 gap-2">
               <Select
+                value={room.roomId}
                 onValueChange={(val) => {
                   const updated = [...selectedRooms];
                   updated[index].roomId = val;
@@ -168,57 +215,78 @@ export default function ReservationForm({
                   <SelectValue placeholder="Select room" />
                 </SelectTrigger>
                 <SelectContent>
-                  {rooms?.map((room) => (
-                    <SelectItem key={room.id} value={room.id}>
-                      {room.name}
+                  {rooms?.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Input
                 type="date"
+                value={room.checkIn}
                 onChange={(e) => {
                   const updated = [...selectedRooms];
-                  updated[index].checkIn = new Date(
-                    e.target.value + "T00:00:00.000Z",
-                  ).toISOString();
+                  updated[index].checkIn = e.target.value;
                   setSelectedRooms(updated);
                 }}
               />
               <Input
                 type="date"
+                value={room.checkOut}
                 onChange={(e) => {
                   const updated = [...selectedRooms];
-                  updated[index].checkOut = new Date(
-                    e.target.value + "T00:00:00.000Z",
-                  ).toISOString();
+                  updated[index].checkOut = e.target.value;
                   setSelectedRooms(updated);
                 }}
               />
             </div>
           ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setSelectedRooms([
-                ...selectedRooms,
-                { roomId: "", checkIn: "", checkOut: "" },
-              ])
-            }
+          {!isEditing && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setSelectedRooms([
+                  ...selectedRooms,
+                  { roomId: "", checkIn: "", checkOut: "" },
+                ])
+              }
+            >
+              + Add Another Room
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Status - only show when editing */}
+      {isEditing && (
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select
+            defaultValue={reservation.status}
+            onValueChange={(val) => setValue("status", val as any)}
           >
-            + Add Another Room
-          </Button>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       )}
 
       <Button
         type="submit"
         className="w-full"
-        disabled={createMutation.isPending}
+        disabled={createMutation.isPending || updateStatusMutation.isPending}
       >
-        {createMutation.isPending ? "Creating..." : "Create Reservation"}
+        {isEditing ? "Update Reservation" : "Create Reservation"}
       </Button>
     </form>
   );

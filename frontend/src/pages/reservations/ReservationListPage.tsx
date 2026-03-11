@@ -50,6 +50,9 @@ export default function ReservationListPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
+  const [editReservation, setEditReservation] = useState<Reservation | null>(
+    null,
+  );
   const { data, isLoading } = useQuery({
     queryKey: ["reservations"],
     queryFn: () => reservationsApi.getAll().then((res) => res.data.data),
@@ -139,6 +142,13 @@ export default function ReservationListPage() {
                         onClick={() => setSelectedReservation(reservation)}
                       >
                         View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditReservation(reservation)}
+                      >
+                        Edit
                       </Button>
 
                       {reservation.status === "PENDING" && (
@@ -275,6 +285,25 @@ export default function ReservationListPage() {
           )}
         </SheetContent>
       </Sheet>
+      <Dialog
+        open={!!editReservation}
+        onOpenChange={() => setEditReservation(null)}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Reservation</DialogTitle>
+          </DialogHeader>
+          {editReservation && (
+            <ReservationForm
+              reservation={editReservation}
+              onSuccess={() => {
+                setEditReservation(null);
+                queryClient.invalidateQueries({ queryKey: ["reservations"] });
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

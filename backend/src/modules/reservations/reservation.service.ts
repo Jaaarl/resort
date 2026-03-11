@@ -209,3 +209,25 @@ export const cancelReservation = async (id: string) => {
     data: { status: "CANCELLED" },
   });
 };
+
+export const updateReservation = async (id: string, data: any) => {
+  await getReservationById(id);
+
+  return await prisma.reservation.update({
+    where: { id },
+    data: {
+      customerName: data.customerName,
+      customerPhone: data.customerPhone,
+      customerEmail: data.customerEmail,
+      customerLocation: data.customerLocation,
+      totalPerson: data.totalPerson,
+      totalAmount: data.totalAmount.toString(),
+      isWalkIn: data.isWalkIn,
+    },
+    include: {
+      rooms: { include: { room: true } },
+      poolSlots: { include: { poolSlot: true } },
+      addOns: { include: { addOn: true } },
+    },
+  });
+};
