@@ -8,6 +8,7 @@ import MaintenancePage from "./pages/maintenance/MaintenancePage";
 import InventoryPage from "./pages/inventory/InventoryPage";
 import FeedbackPage from "./pages/feedback/FeedbackPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
 
 export const router = createBrowserRouter([
   {
@@ -16,7 +17,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/",
-    element: <ProtectedRoute />,
+    element: <Layout />,
     children: [
       { path: "/", element: <DashboardPage /> },
       { path: "/rooms", element: <RoomListPage /> },
