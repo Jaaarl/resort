@@ -20,6 +20,14 @@ const loginSchema = z.object({
 });
 
 type LoginInput = z.infer<typeof loginSchema>;
+export function ButtonDemo() {
+  return (
+    <div className="flex flex-wrap items-center gap-2 md:flex-row">
+      <Button variant="outline">Button</Button>
+      <Button variant="outline" size="icon" aria-label="Submit"></Button>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -95,7 +103,12 @@ export default function LoginPage() {
               <p className="text-sm text-red-500 text-center">{error}</p>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              variant="outline"
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
