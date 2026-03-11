@@ -275,7 +275,6 @@ export default function ReservationListPage() {
           )}
         </SheetContent>
       </Sheet>
-      ;
     </div>
   );
 }
