@@ -40,7 +40,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-
+import { toast } from "sonner";
 const itemSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
@@ -133,10 +133,14 @@ export default function InventoryPage() {
   const movementMutation = useMutation({
     mutationFn: (data: any) => inventoryApi.recordMovement(data),
     onSuccess: () => {
+      toast.success("Movement recorded successfully");
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
       queryClient.invalidateQueries({ queryKey: ["inventory-movements"] });
       setMovementOpen(false);
       resetMovement();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || "Failed to record movement");
     },
   });
 
