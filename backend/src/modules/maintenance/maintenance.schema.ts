@@ -19,7 +19,7 @@ export const updateMaintenanceTaskSchema = z.object({
 
 export const completeMaintenanceTaskSchema = z.object({
   remarks: z.string().optional(),
-  photoUrl: z.string().url().optional(),
+  photoUrl: z.string().url().optional().or(z.literal("")),
 });
 
 export const updateTaskStatusSchema = z.object({
