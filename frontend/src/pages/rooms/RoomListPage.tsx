@@ -36,6 +36,24 @@ export default function RoomListPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [searchDates, setSearchDates] = useState<{
+    checkIn: string;
+    checkOut: string;
+  } | null>(null);
+
+  const { data: availability } = useQuery({
+    queryKey: ["room-availability", searchDates],
+    queryFn: () =>
+      roomsApi
+        .getAvailability(
+          new Date(searchDates!.checkIn + "T00:00:00.000Z").toISOString(),
+          new Date(searchDates!.checkOut + "T00:00:00.000Z").toISOString(),
+        )
+        .then((res) => res.data.data),
+    enabled: !!searchDates,
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["rooms"],
@@ -108,7 +126,6 @@ export default function RoomListPage() {
         <h1 className="text-2xl font-bold">Rooms</h1>
         <Button onClick={handleAdd}>Add Room</Button>
       </div>
-
       {isLoading ? (
         <p>Loading...</p>
       ) : (
@@ -156,7 +173,6 @@ export default function RoomListPage() {
           </TableBody>
         </Table>
       )}
-
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -207,6 +223,64 @@ export default function RoomListPage() {
           </form>
         </DialogContent>
       </Dialog>
+      // Add this section below the rooms table
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Check Availability</h2>
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="space-y-1">
+            <Label>Check-in</Label>
+            <Input
+              type="date"
+              className="w-40"
+              onChange={(e) => setCheckIn(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Check-out</Label>
+            <Input
+              type="date"
+              className="w-40"
+              onChange={(e) => setCheckOut(e.target.value)}
+            />
+          </div>
+          <Button
+            className="mt-5"
+            onClick={() => setSearchDates({ checkIn, checkOut })}
+            disabled={!checkIn || !checkOut}
+          >
+            Check
+          </Button>
+        </div>
+
+        {availability && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Room</TableHead>
+                <TableHead>Capacity</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {availability.map((room) => (
+                <TableRow key={room.id}>
+                  <TableCell>{room.name}</TableCell>
+                  <TableCell>{room.capacity} persons</TableCell>
+                  <TableCell>₱{room.price}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={room.isAvailable ? "default" : "destructive"}
+                    >
+                      {room.isAvailable ? "Available" : "Booked"}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
     </div>
   );
 }

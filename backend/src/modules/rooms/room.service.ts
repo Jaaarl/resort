@@ -41,3 +41,28 @@ export const deleteRoom = async (id: string) => {
     data: { isActive: false }, // soft delete
   });
 };
+
+export const getRoomAvailability = async (
+  checkIn: string,
+  checkOut: string,
+) => {
+  const rooms = await prisma.room.findMany({
+    where: { isActive: true },
+    include: {
+      reservationRooms: {
+        where: {
+          checkIn: { lt: new Date(checkOut) },
+          checkOut: { gt: new Date(checkIn) },
+          reservation: {
+            status: { notIn: ["CANCELLED"] },
+          },
+        },
+      },
+    },
+  });
+
+  return rooms.map((room) => ({
+    ...room,
+    isAvailable: room.reservationRooms.length === 0,
+  }));
+};

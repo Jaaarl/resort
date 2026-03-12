@@ -4,7 +4,7 @@ import * as roomService from "./room.service";
 export const getAllRooms = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const rooms = await roomService.getAllRooms();
@@ -17,7 +17,7 @@ export const getAllRooms = async (
 export const getRoomById = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const room = await roomService.getRoomById(req.params.id as string);
@@ -30,7 +30,7 @@ export const getRoomById = async (
 export const createRoom = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const room = await roomService.createRoom(req.body);
@@ -43,10 +43,13 @@ export const createRoom = async (
 export const updateRoom = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const room = await roomService.updateRoom(req.params.id as string, req.body);
+    const room = await roomService.updateRoom(
+      req.params.id as string,
+      req.body,
+    );
     res.json({ status: "ok", data: room });
   } catch (error) {
     next(error);
@@ -56,11 +59,28 @@ export const updateRoom = async (
 export const deleteRoom = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     await roomService.deleteRoom(req.params.id as string);
     res.json({ status: "ok", message: "Room deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getRoomAvailability = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { checkIn, checkOut } = req.query;
+    const rooms = await roomService.getRoomAvailability(
+      checkIn as string,
+      checkOut as string,
+    );
+    res.json({ status: "ok", data: rooms });
   } catch (error) {
     next(error);
   }

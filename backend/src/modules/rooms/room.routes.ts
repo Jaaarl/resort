@@ -6,6 +6,7 @@ import { authenticate, authorize } from "../../middleware/auth";
 const router = Router();
 
 router.get("/", authenticate, roomController.getAllRooms);
+router.get("/availability", authenticate, roomController.getRoomAvailability);
 router.get("/:id", authenticate, roomController.getRoomById);
 router.post(
   "/",
@@ -14,6 +15,7 @@ router.post(
   validate(createRoomSchema),
   roomController.createRoom,
 );
+
 router.put(
   "/:id",
   authenticate,

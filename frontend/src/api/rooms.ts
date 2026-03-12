@@ -16,4 +16,8 @@ export const roomsApi = {
   update: (id: string, data: Partial<Room>) =>
     api.put(`/api/rooms/${id}`, data),
   delete: (id: string) => api.delete(`/api/rooms/${id}`),
+  getAvailability: (checkIn: string, checkOut: string) =>
+    api.get<{ data: (Room & { isAvailable: boolean })[] }>(
+      `/api/rooms/availability?checkIn=${checkIn}&checkOut=${checkOut}`,
+    ),
 };
