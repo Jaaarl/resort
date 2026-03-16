@@ -40,4 +40,6 @@ export const reservationsApi = {
     api.patch(`/api/reservations/${id}/status`, { status }),
   cancel: (id: string) => api.patch(`/api/reservations/${id}/cancel`),
   update: (id: string, data: any) => api.put(`/api/reservations/${id}`, data),
+  addAddOns: (id: string, addOns: { addOnId: string; quantity: number }[]) =>
+    api.post(`/api/reservations/${id}/addons`, { addOns }),
 };

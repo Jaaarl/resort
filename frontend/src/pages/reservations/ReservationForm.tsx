@@ -8,6 +8,7 @@ import { roomsApi } from "../../api/rooms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { addonsApi } from "../../api/addons";
 import {
   Select,
   SelectContent,
@@ -46,6 +47,11 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
     queryFn: () => roomsApi.getAll().then((res) => res.data.data),
   });
 
+  const { data: addons } = useQuery({
+    queryKey: ["addons"],
+    queryFn: () => addonsApi.getAll().then((res) => res.data.data),
+  });
+
   const [selectedRooms, setSelectedRooms] = useState(
     reservation?.rooms?.map((r) => ({
       roomId: r.roomId,
@@ -74,6 +80,21 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
     },
   });
 
+  const [selectedAddons, setSelectedAddons] = useState<
+    Array<{ addOnId: string; quantity: number }>
+  >([]);
+
+  const addAddonsMutation = useMutation({
+    mutationFn: ({
+      id,
+      addOns,
+    }: {
+      id: string;
+      addOns: { addOnId: string; quantity: number }[];
+    }) => reservationsApi.addAddOns(id, addOns),
+    onSuccess,
+  });
+
   const createMutation = useMutation({
     mutationFn: reservationsApi.create,
     onSuccess,
@@ -93,14 +114,20 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
 
   const onSubmit = (data: ReservationFormInput) => {
     if (isEditing && reservation) {
-      // update reservation details
       updateMutation.mutate({ id: reservation.id, data });
 
-      // also update status if changed
       if (data.status && data.status !== reservation.status) {
         updateStatusMutation.mutate({
           id: reservation.id,
           status: data.status,
+        });
+      }
+
+      const filteredAddons = selectedAddons.filter((a) => a.addOnId !== "");
+      if (filteredAddons.length > 0) {
+        addAddonsMutation.mutate({
+          id: reservation.id,
+          addOns: filteredAddons,
         });
       }
     } else {
@@ -114,6 +141,7 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
                 checkOut: new Date(r.checkOut + "T00:00:00.000Z").toISOString(),
               }))
             : undefined,
+        addOns: selectedAddons.filter((a) => a.addOnId !== ""),
       });
     }
   };
@@ -195,6 +223,69 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
           className="w-4 h-4"
         />
         <Label htmlFor="isWalkIn">Walk-in customer</Label>
+      </div>
+
+      {/* AddOns */}
+      <div className="space-y-2">
+        <Label>Add-ons (optional)</Label>
+        {selectedAddons.map((item, index) => (
+          <div key={index} className="grid grid-cols-3 gap-2 items-center">
+            <Select
+              value={item.addOnId}
+              onValueChange={(val) => {
+                const updated = [...selectedAddons];
+                updated[index].addOnId = val;
+                setSelectedAddons(updated);
+              }}
+            >
+              <SelectTrigger className="col-span-2">
+                <SelectValue placeholder="Select add-on" />
+              </SelectTrigger>
+              <SelectContent>
+                {addons?.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name} — ₱{a.price}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-1">
+              <Input
+                type="number"
+                placeholder="Qty"
+                value={item.quantity}
+                min={1}
+                onChange={(e) => {
+                  const updated = [...selectedAddons];
+                  updated[index].quantity = Number(e.target.value);
+                  setSelectedAddons(updated);
+                }}
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() =>
+                  setSelectedAddons(
+                    selectedAddons.filter((_, i) => i !== index),
+                  )
+                }
+              >
+                ✕
+              </Button>
+            </div>
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            setSelectedAddons([...selectedAddons, { addOnId: "", quantity: 1 }])
+          }
+        >
+          + Add Add-on
+        </Button>
       </div>
 
       {/* Room fields */}
