@@ -231,3 +231,40 @@ export const updateReservation = async (id: string, data: any) => {
     },
   });
 };
+
+export const updateReservationAddOns = async (
+  id: string,
+  addOns: { addOnId: string; quantity: number }[],
+) => {
+  await getReservationById(id);
+
+  // delete all existing addons first
+  await prisma.reservationAddOn.deleteMany({
+    where: { reservationId: id },
+  });
+
+  if (addOns.length === 0) return getReservationById(id);
+
+  // get addon prices
+  const addonIds = addOns.map((a) => a.addOnId);
+  const addonRecords = await prisma.addOn.findMany({
+    where: { id: { in: addonIds } },
+  });
+
+  // create new addons
+  await prisma.reservationAddOn.createMany({
+    data: addOns.map((a) => {
+      const addonRecord = addonRecords.find((r) => r.id === a.addOnId);
+      if (!addonRecord)
+        throw new AppError(`Add-on ${a.addOnId} not found`, 404);
+      return {
+        reservationId: id,
+        addOnId: a.addOnId,
+        quantity: a.quantity,
+        price: addonRecord.price,
+      };
+    }),
+  });
+
+  return getReservationById(id);
+};

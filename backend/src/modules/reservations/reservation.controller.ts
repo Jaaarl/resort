@@ -86,3 +86,19 @@ export const updateReservation = async (
     next(error);
   }
 };
+
+export const updateReservationAddOns = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const reservation = await reservationService.updateReservationAddOns(
+      req.params.id as string,
+      req.body.addOns,
+    );
+    res.json({ status: "ok", data: reservation });
+  } catch (error) {
+    next(error);
+  }
+};

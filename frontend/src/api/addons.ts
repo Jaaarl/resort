@@ -30,4 +30,6 @@ export const addonsApi = {
     reservationId: string,
     addOns: { addOnId: string; quantity: number }[],
   ) => api.post(`/api/reservations/${reservationId}/addons`, { addOns }),
+  updateAddOns: (id: string, addOns: { addOnId: string; quantity: number }[]) =>
+    api.put(`/api/reservations/${id}/addons`, { addOns }),
 };

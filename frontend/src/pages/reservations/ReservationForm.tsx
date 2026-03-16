@@ -95,8 +95,14 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
     }: {
       id: string;
       addOns: { addOnId: string; quantity: number }[];
-    }) => reservationsApi.addAddOns(id, addOns),
+    }) => {
+      console.log("calling updateAddOns", id, addOns);
+      return reservationsApi.updateAddOns(id, addOns);
+    },
     onSuccess,
+    onError: (error: any) => {
+      console.log("addAddonsMutation error", error);
+    },
   });
 
   const createMutation = useMutation({
@@ -127,13 +133,11 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
         });
       }
 
-      const filteredAddons = selectedAddons.filter((a) => a.addOnId !== "");
-      if (filteredAddons.length > 0) {
-        addAddonsMutation.mutate({
-          id: reservation.id,
-          addOns: filteredAddons,
-        });
-      }
+      // always update addons (even if empty — clears them)
+      addAddonsMutation.mutate({
+        id: reservation.id,
+        addOns: selectedAddons.filter((a) => a.addOnId !== ""),
+      });
     } else {
       createMutation.mutate({
         ...data,
