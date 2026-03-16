@@ -79,10 +79,14 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
       status: reservation?.status || "PENDING",
     },
   });
-
   const [selectedAddons, setSelectedAddons] = useState<
     Array<{ addOnId: string; quantity: number }>
-  >([]);
+  >(
+    reservation?.addOns?.map((a) => ({
+      addOnId: a.addOnId,
+      quantity: a.quantity,
+    })) || [],
+  );
 
   const addAddonsMutation = useMutation({
     mutationFn: ({

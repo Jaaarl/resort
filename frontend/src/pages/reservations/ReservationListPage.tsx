@@ -106,6 +106,7 @@ export default function ReservationListPage() {
               <TableRow>
                 <TableHead>Customer</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Add-ons</TableHead>
                 <TableHead>Persons</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
@@ -125,6 +126,13 @@ export default function ReservationListPage() {
                     </div>
                   </TableCell>
                   <TableCell>{reservation.type}</TableCell>
+                  <TableCell>
+                    {reservation.addOns?.length > 0
+                      ? reservation.addOns
+                          .map((a) => `${a.addOn.name} x${a.quantity}`)
+                          .join(", ")
+                      : "-"}
+                  </TableCell>
                   <TableCell>{reservation.totalPerson}</TableCell>
                   <TableCell>₱{reservation.totalAmount}</TableCell>
                   <TableCell>
