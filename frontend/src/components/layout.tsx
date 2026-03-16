@@ -12,6 +12,7 @@ const navItems = [
   { path: "/maintenance", label: "Maintenance" },
   { path: "/inventory", label: "Inventory" },
   { path: "/feedback", label: "Feedback" },
+  { path: "/addons", label: "Add-ons" },
 ];
 
 export default function Layout() {
