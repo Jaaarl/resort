@@ -76,13 +76,13 @@ export default function FeedbackPage() {
           <div>
             <p className="text-sm text-gray-500">Average Rating</p>
             <p className="text-3xl font-bold">
-              {Number(average.average).toFixed(1)}
+              {Number(average.averageRating).toFixed(1)}
             </p>
           </div>
           <div>
-            <StarRating rating={Math.round(Number(average.average))} />
+            <StarRating rating={Math.round(Number(average.averageRating))} />
             <p className="text-sm text-gray-500 mt-1">
-              {average.total} reviews
+              {average.totalFeedbacks} reviews
             </p>
           </div>
         </div>

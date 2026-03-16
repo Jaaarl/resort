@@ -14,7 +14,7 @@ export interface Feedback {
 export const feedbackApi = {
   getAll: () => api.get<{ data: Feedback[] }>("/api/feedback"),
   getAverage: () =>
-    api.get<{ data: { average: number; total: number } }>(
+    api.get<{ data: { averageRating: number; totalFeedbacks: number } }>(
       "/api/feedback/average",
     ),
   getByRating: (rating: number) =>
