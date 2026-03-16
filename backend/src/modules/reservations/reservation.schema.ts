@@ -20,7 +20,11 @@ export const createReservationSchema = z
   .object({
     customerName: z.string().min(1, "Customer name is required"),
     customerPhone: z.string().min(1, "Customer phone is required"),
-    customerEmail: z.string().email("Invalid email").optional(),
+    customerEmail: z
+      .string()
+      .email("Invalid email")
+      .or(z.literal(""))
+      .optional(),
     customerLocation: z.string().optional(),
     type: z.enum(["ROOM", "POOL", "BOTH"]),
     totalPerson: z.number().int().positive(),
