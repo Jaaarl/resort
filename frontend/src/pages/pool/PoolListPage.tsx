@@ -29,6 +29,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 const poolSlotSchema = z.object({
   label: z.enum(["MORNING", "AFTERNOON"]),
@@ -88,7 +89,10 @@ export default function PoolListPage() {
       queryClient.invalidateQueries({ queryKey: ["pool"] });
       setSlotOpen(false);
       resetSlot();
+      toast.success("Pool slot created");
     },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to create pool slot"),
   });
 
   const updateMutation = useMutation({
@@ -99,7 +103,10 @@ export default function PoolListPage() {
       setSlotOpen(false);
       setSelectedSlot(null);
       resetSlot();
+      toast.success("Pool slot updated");
     },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to update pool slot"),
   });
 
   const disableMutation = useMutation({
@@ -109,7 +116,10 @@ export default function PoolListPage() {
       queryClient.invalidateQueries({ queryKey: ["pool-availability"] });
       setDisableOpen(false);
       resetDisable();
+      toast.success("Pool slot disabled");
     },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to disable pool slot"),
   });
 
   const enableMutation = useMutation({
@@ -117,7 +127,10 @@ export default function PoolListPage() {
       poolApi.enable(label, date),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pool-availability"] });
+      toast.success("Pool slot enabled");
     },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to enable pool slot"),
   });
 
   const onSlotSubmit = (data: PoolSlotInput) => {

@@ -31,6 +31,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -99,7 +100,10 @@ export default function MaintenancePage() {
       queryClient.invalidateQueries({ queryKey: ["maintenance"] });
       setTaskOpen(false);
       reset();
+      toast.success("Maintenance task created");
     },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to create task"),
   });
 
   const updateMutation = useMutation({
@@ -110,7 +114,10 @@ export default function MaintenancePage() {
       setTaskOpen(false);
       setSelectedTask(null);
       reset();
+      toast.success("Maintenance task updated");
     },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to update task"),
   });
 
   const updateStatusMutation = useMutation({
@@ -132,8 +139,12 @@ export default function MaintenancePage() {
 
   const deleteMutation = useMutation({
     mutationFn: maintenanceApi.delete,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["maintenance"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      toast.success("Maintenance task deleted");
+    },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to delete task"),
   });
 
   const onTaskSubmit = (data: TaskInput) => {

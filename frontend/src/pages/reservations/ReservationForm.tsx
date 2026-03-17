@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const reservationSchema = z.object({
   customerName: z.string().min(1, "Name is required"),
@@ -107,19 +108,40 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
 
   const createMutation = useMutation({
     mutationFn: reservationsApi.create,
-    onSuccess,
+    onSuccess: () => {
+      toast.success("Reservation created successfully");
+      onSuccess();
+    },
+    onError: (error: any) =>
+      toast.error(
+        error.response?.data?.error || "Failed to create reservation",
+      ),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       reservationsApi.update(id, data),
-    onSuccess,
+    onSuccess: () => {
+      toast.success("Reservation updated successfully");
+      onSuccess();
+    },
+    onError: (error: any) =>
+      toast.error(
+        error.response?.data?.error || "Failed to update reservation",
+      ),
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       reservationsApi.updateStatus(id, status),
-    onSuccess,
+    onSuccess: () => {
+      toast.success("Reservation status updated successfully");
+      onSuccess();
+    },
+    onError: (error: any) =>
+      toast.error(
+        error.response?.data?.error || "Failed to update reservation status",
+      ),
   });
 
   const onSubmit = (data: ReservationFormInput) => {

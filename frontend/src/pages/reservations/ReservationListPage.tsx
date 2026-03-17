@@ -33,6 +33,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import ReservationForm from "./ReservationForm";
+import { toast } from "sonner";
 
 const statusColors: Record<
   string,
@@ -61,14 +62,26 @@ export default function ReservationListPage() {
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       reservationsApi.updateStatus(id, status),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["reservations"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      toast.success("Reservation updated successfully");
+    },
+    onError: (error: any) =>
+      toast.error(
+        error.response?.data?.error || "Failed to update reservation",
+      ),
   });
 
   const cancelMutation = useMutation({
     mutationFn: reservationsApi.cancel,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["reservations"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      toast.success("Reservation cancelled successfully");
+    },
+    onError: (error: any) =>
+      toast.error(
+        error.response?.data?.error || "Failed to cancel reservation",
+      ),
   });
 
   const filtered = data?.filter((r) =>

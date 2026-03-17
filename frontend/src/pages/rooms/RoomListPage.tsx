@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Toast } from "../../components/ui/sonner";
+import { toast } from "sonner";
 
 const roomSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -76,7 +78,10 @@ export default function RoomListPage() {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
       setOpen(false);
       reset();
+      toast.success("Room created successfully");
     },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to create room"),
   });
 
   const updateMutation = useMutation({
@@ -87,7 +92,10 @@ export default function RoomListPage() {
       setOpen(false);
       setSelectedRoom(null);
       reset();
+      toast.success("Room updated successfully");
     },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to update room"),
   });
 
   const deleteMutation = useMutation({
@@ -95,6 +103,8 @@ export default function RoomListPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
     },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to delete room"),
   });
 
   const onSubmit = (data: RoomFormInput) => {
@@ -223,7 +233,6 @@ export default function RoomListPage() {
           </form>
         </DialogContent>
       </Dialog>
-      // Add this section below the rooms table
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Check Availability</h2>
         <div className="flex gap-2 items-center flex-wrap">
