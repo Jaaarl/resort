@@ -140,6 +140,7 @@ export const createReservation = async (data: CreateReservationInput) => {
       totalPerson: data.totalPerson,
       totalAmount: data.totalAmount.toString(),
       status: "PENDING",
+      isWalkIn: data.isWalkIn ?? false,
       rooms:
         data.rooms && data.rooms.length > 0
           ? {
