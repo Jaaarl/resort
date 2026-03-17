@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AddOnsPage from "./pages/addons/AddOnsPage";
 import Layout from "./components/Layout";
 import PublicFeedbackPage from "./pages/public/ShareFeedbackPage";
+import MyTasksPage from "./pages/maintenance/MyTaskPage";
 
 export const router = createBrowserRouter([
   {
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       { path: "/feedback", element: <FeedbackPage /> },
       { path: "/addons", element: <AddOnsPage /> },
       { path: "/share-feedback", element: <PublicFeedbackPage /> },
+      { path: "/my-tasks", element: <MyTasksPage /> },
     ],
   },
 ]);

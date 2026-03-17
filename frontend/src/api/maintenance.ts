@@ -28,4 +28,6 @@ export const maintenanceApi = {
   complete: (id: string, data: { remarks?: string; photoUrl?: string }) =>
     api.patch(`/api/maintenance/${id}/complete`, data),
   delete: (id: string) => api.delete(`/api/maintenance/${id}`),
+  getMyTasks: (userId: string) =>
+    api.get<{ data: MaintenanceTask[] }>(`/api/maintenance/user/${userId}`),
 };

@@ -6,6 +6,7 @@ import prisma from "./lib/prisma";
 import router from "./routes/router";
 import { errorHandler } from "./middleware/error";
 import { authLimiter } from "./middleware/rateLimit";
+import { startMaintenanceJob } from "./jobs/maintenance.job";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +43,7 @@ app.use("/api", router);
 // Global Error handling
 app.use(errorHandler);
 
+startMaintenanceJob();
 // Start server
 app.listen(PORT, () =>
   console.log(`Server running on http://localhost:${PORT}`),
