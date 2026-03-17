@@ -236,22 +236,32 @@ export const updateReservationAddOns = async (
   id: string,
   addOns: { addOnId: string; quantity: number }[],
 ) => {
-  await getReservationById(id);
+  const reservation = await getReservationById(id);
 
-  // delete all existing addons first
+  if (addOns.length > 0) {
+    // get date from reservation
+    const date =
+      reservation.rooms.length > 0
+        ? reservation.rooms[0].checkIn.toISOString()
+        : reservation.poolSlots[0].poolDate.toISOString();
+
+    for (const addOn of addOns) {
+      await checkAddOnAvailability(addOn.addOnId, addOn.quantity, date, id);
+    }
+  }
+
+  // delete all existing
   await prisma.reservationAddOn.deleteMany({
     where: { reservationId: id },
   });
 
   if (addOns.length === 0) return getReservationById(id);
 
-  // get addon prices
   const addonIds = addOns.map((a) => a.addOnId);
   const addonRecords = await prisma.addOn.findMany({
     where: { id: { in: addonIds } },
   });
 
-  // create new addons
   await prisma.reservationAddOn.createMany({
     data: addOns.map((a) => {
       const addonRecord = addonRecords.find((r) => r.id === a.addOnId);

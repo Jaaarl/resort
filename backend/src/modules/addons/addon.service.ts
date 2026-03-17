@@ -19,13 +19,19 @@ export const getAddOnById = async (id: string) => {
   return addOn;
 };
 
-export const getAddOnAvailability = async (addOnId: string, date: string) => {
+export const getAddOnAvailability = async (
+  addOnId: string,
+  date: string,
+  excludeReservationId?: string,
+) => {
   const addOn = await getAddOnById(addOnId);
 
-  // count how many are already reserved on this date
   const reserved = await prisma.reservationAddOn.aggregate({
     where: {
       addOnId,
+      reservationId: excludeReservationId
+        ? { not: excludeReservationId }
+        : undefined,
       reservation: {
         status: { notIn: ["CANCELLED"] },
         OR: [
@@ -66,8 +72,13 @@ export const checkAddOnAvailability = async (
   addOnId: string,
   quantity: number,
   date: string,
+  excludeReservationId?: string,
 ) => {
-  const availability = await getAddOnAvailability(addOnId, date);
+  const availability = await getAddOnAvailability(
+    addOnId,
+    date,
+    excludeReservationId,
+  );
 
   if (quantity > availability.availableQuantity) {
     throw new AppError(
