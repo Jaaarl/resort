@@ -10,6 +10,7 @@ import FeedbackPage from "./pages/feedback/FeedbackPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AddOnsPage from "./pages/addons/AddOnsPage";
 import Layout from "./components/Layout";
+import PublicFeedbackPage from "./pages/public/ShareFeedbackPage";
 
 export const router = createBrowserRouter([
   {
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       { path: "/inventory", element: <InventoryPage /> },
       { path: "/feedback", element: <FeedbackPage /> },
       { path: "/addons", element: <AddOnsPage /> },
+      { path: "/share-feedback", element: <PublicFeedbackPage /> },
     ],
   },
 ]);
