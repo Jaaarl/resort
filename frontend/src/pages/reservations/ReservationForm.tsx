@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { poolApi } from "../../api/pool";
 
 const reservationSchema = z.object({
   customerName: z.string().min(1, "Name is required"),
@@ -48,6 +49,11 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
     queryFn: () => roomsApi.getAll().then((res) => res.data.data),
   });
 
+  const { data: poolSlots } = useQuery({
+    queryKey: ["pool"],
+    queryFn: () => poolApi.getAll().then((res) => res.data.data),
+  });
+
   const { data: addons } = useQuery({
     queryKey: ["addons"],
     queryFn: () => addonsApi.getAll().then((res) => res.data.data),
@@ -60,6 +66,26 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
       checkOut: new Date(r.checkOut).toISOString().split("T")[0],
     })) || [{ roomId: "", checkIn: "", checkOut: "" }],
   );
+
+  type PoolSlotSelection = { poolSlotId: string; poolDate: string };
+
+  const [selectedPoolSlots, setSelectedPoolSlots] = useState<
+    PoolSlotSelection[]
+  >(
+    reservation?.poolSlots?.map((s) => ({
+      poolSlotId: s.poolSlotId,
+      poolDate: new Date(s.poolDate).toISOString().split("T")[0],
+    })) || [],
+  );
+
+  function SectionTitle({ children }: { children: React.ReactNode }) {
+    return (
+      <div className="flex items-center gap-2 pt-2">
+        <span className="text-sm font-semibold text-gray-700">{children}</span>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
+    );
+  }
 
   const {
     register,
@@ -172,6 +198,13 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
                 checkOut: new Date(r.checkOut + "T00:00:00.000Z").toISOString(),
               }))
             : undefined,
+        poolSlots:
+          type === "POOL" || type === "BOTH"
+            ? selectedPoolSlots.map((s) => ({
+                poolSlotId: s.poolSlotId,
+                poolDate: new Date(s.poolDate + "T00:00:00.000Z").toISOString(),
+              }))
+            : undefined,
         addOns: selectedAddons.filter((a) => a.addOnId !== ""),
       });
     }
@@ -180,43 +213,44 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 max-h-[70vh] overflow-y-auto pr-2"
+      className="space-y-4 max-h-[75vh] overflow-y-auto pr-2"
     >
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Customer Name</Label>
+      {/* Customer Info */}
+      <SectionTitle>Customer Information</SectionTitle>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label>Name *</Label>
           <Input {...register("customerName")} placeholder="Full name" />
           {errors.customerName && (
-            <p className="text-sm text-red-500">
+            <p className="text-xs text-red-500">
               {errors.customerName.message}
             </p>
           )}
         </div>
-        <div className="space-y-2">
-          <Label>Phone</Label>
+        <div className="space-y-1">
+          <Label>Phone *</Label>
           <Input {...register("customerPhone")} placeholder="Phone number" />
           {errors.customerPhone && (
-            <p className="text-sm text-red-500">
+            <p className="text-xs text-red-500">
               {errors.customerPhone.message}
             </p>
           )}
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Email (optional)</Label>
-          <Input {...register("customerEmail")} placeholder="Email" />
+        <div className="space-y-1">
+          <Label>Email</Label>
+          <Input {...register("customerEmail")} placeholder="Optional" />
         </div>
-        <div className="space-y-2">
-          <Label>Location (optional)</Label>
+        <div className="space-y-1">
+          <Label>Location</Label>
           <Input {...register("customerLocation")} placeholder="City" />
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label>Type</Label>
+      {/* Reservation Details */}
+      <SectionTitle>Reservation Details</SectionTitle>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-1">
+          <Label>Type *</Label>
           <Select
             value={type}
             disabled={isEditing}
@@ -235,30 +269,202 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>Total Persons</Label>
-          <Input {...register("totalPerson")} type="number" />
+        <div className="space-y-1">
+          <Label>Total Persons *</Label>
+          <Input {...register("totalPerson")} type="number" min={1} />
         </div>
-        <div className="space-y-2">
-          <Label>Total Amount</Label>
-          <Input {...register("totalAmount")} type="number" />
+        <div className="space-y-1">
+          <Label>Total Amount *</Label>
+          <Input {...register("totalAmount")} type="number" min={0} />
         </div>
       </div>
 
       {/* Walk-in */}
-      <div className="flex items-center gap-2">
+      <label className="flex items-center gap-2 cursor-pointer w-fit">
         <input
           type="checkbox"
-          id="isWalkIn"
           {...register("isWalkIn")}
-          className="w-4 h-4"
+          className="w-4 h-4 rounded"
         />
-        <Label htmlFor="isWalkIn">Walk-in customer</Label>
-      </div>
+        <span className="text-sm text-gray-700">Walk-in customer</span>
+      </label>
 
-      {/* AddOns */}
+      {/* Room fields */}
+      {(type === "ROOM" || type === "BOTH") && (
+        <>
+          <SectionTitle>Room Selection</SectionTitle>
+          <div className="space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              <span className="text-xs text-gray-500">Room</span>
+              <span className="text-xs text-gray-500">Check-in</span>
+              <span className="text-xs text-gray-500">Check-out</span>
+            </div>
+            {selectedRooms.map((room, index) => (
+              <div key={index} className="grid grid-cols-3 gap-2 items-center">
+                <Select
+                  value={room.roomId}
+                  disabled={isEditing}
+                  onValueChange={(val) => {
+                    const updated = [...selectedRooms];
+                    updated[index].roomId = val;
+                    setSelectedRooms(updated);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select room" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rooms?.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="date"
+                  value={room.checkIn}
+                  disabled={isEditing}
+                  onChange={(e) => {
+                    const updated = [...selectedRooms];
+                    updated[index].checkIn = e.target.value;
+                    setSelectedRooms(updated);
+                  }}
+                />
+                <div className="flex gap-1">
+                  <Input
+                    type="date"
+                    value={room.checkOut}
+                    disabled={isEditing}
+                    onChange={(e) => {
+                      const updated = [...selectedRooms];
+                      updated[index].checkOut = e.target.value;
+                      setSelectedRooms(updated);
+                    }}
+                  />
+                  {!isEditing && selectedRooms.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() =>
+                        setSelectedRooms(
+                          selectedRooms.filter((_, i) => i !== index),
+                        )
+                      }
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {!isEditing && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setSelectedRooms([
+                    ...selectedRooms,
+                    { roomId: "", checkIn: "", checkOut: "" },
+                  ])
+                }
+              >
+                + Add Another Room
+              </Button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Pool fields */}
+      {(type === "POOL" || type === "BOTH") && (
+        <>
+          <SectionTitle>Pool Slot Selection</SectionTitle>
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <span className="text-xs text-gray-500">Slot</span>
+              <span className="text-xs text-gray-500">Date</span>
+            </div>
+            {selectedPoolSlots.map((slot, index) => (
+              <div key={index} className="grid grid-cols-2 gap-2 items-center">
+                <Select
+                  value={slot.poolSlotId}
+                  disabled={isEditing}
+                  onValueChange={(val) => {
+                    const updated = [...selectedPoolSlots];
+                    updated[index].poolSlotId = val;
+                    setSelectedPoolSlots(updated);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="MORNING or AFTERNOON" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {poolSlots?.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.label} ({s.startTime} - {s.endTime})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-1">
+                  <Input
+                    type="date"
+                    value={slot.poolDate}
+                    disabled={isEditing}
+                    onChange={(e) => {
+                      const updated = [...selectedPoolSlots];
+                      updated[index].poolDate = e.target.value;
+                      setSelectedPoolSlots(updated);
+                    }}
+                  />
+                  {!isEditing && selectedPoolSlots.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() =>
+                        setSelectedPoolSlots(
+                          selectedPoolSlots.filter((_, i) => i !== index),
+                        )
+                      }
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {!isEditing && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setSelectedPoolSlots([
+                    ...selectedPoolSlots,
+                    { poolSlotId: "", poolDate: "" },
+                  ])
+                }
+              >
+                + Add Slot
+              </Button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Add-ons */}
+      <SectionTitle>Add-ons (Optional)</SectionTitle>
       <div className="space-y-2">
-        <Label>Add-ons (optional)</Label>
+        {selectedAddons.length > 0 && (
+          <div className="grid grid-cols-3 gap-2">
+            <span className="text-xs text-gray-500 col-span-2">Item</span>
+            <span className="text-xs text-gray-500">Qty</span>
+          </div>
+        )}
         {selectedAddons.map((item, index) => (
           <div key={index} className="grid grid-cols-3 gap-2 items-center">
             <Select
@@ -319,73 +525,10 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
         </Button>
       </div>
 
-      {/* Room fields */}
-      {(type === "ROOM" || type === "BOTH") && (
-        <div className="space-y-2">
-          <Label>Rooms</Label>
-          {selectedRooms.map((room, index) => (
-            <div key={index} className="grid grid-cols-3 gap-2">
-              <Select
-                value={room.roomId}
-                onValueChange={(val) => {
-                  const updated = [...selectedRooms];
-                  updated[index].roomId = val;
-                  setSelectedRooms(updated);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select room" />
-                </SelectTrigger>
-                <SelectContent>
-                  {rooms?.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                type="date"
-                value={room.checkIn}
-                onChange={(e) => {
-                  const updated = [...selectedRooms];
-                  updated[index].checkIn = e.target.value;
-                  setSelectedRooms(updated);
-                }}
-              />
-              <Input
-                type="date"
-                value={room.checkOut}
-                onChange={(e) => {
-                  const updated = [...selectedRooms];
-                  updated[index].checkOut = e.target.value;
-                  setSelectedRooms(updated);
-                }}
-              />
-            </div>
-          ))}
-          {!isEditing && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setSelectedRooms([
-                  ...selectedRooms,
-                  { roomId: "", checkIn: "", checkOut: "" },
-                ])
-              }
-            >
-              + Add Another Room
-            </Button>
-          )}
-        </div>
-      )}
-
       {/* Status - only show when editing */}
       {isEditing && (
-        <div className="space-y-2">
-          <Label>Status</Label>
+        <>
+          <SectionTitle>Status</SectionTitle>
           <Select
             defaultValue={reservation.status}
             onValueChange={(val) => setValue("status", val as any)}
@@ -400,7 +543,7 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
               <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </>
       )}
 
       <Button
