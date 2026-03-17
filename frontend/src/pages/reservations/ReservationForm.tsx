@@ -96,14 +96,9 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
     }: {
       id: string;
       addOns: { addOnId: string; quantity: number }[];
-    }) => {
-      console.log("calling updateAddOns", id, addOns);
-      return reservationsApi.updateAddOns(id, addOns);
-    },
-    onSuccess,
-    onError: (error: any) => {
-      console.log("addAddonsMutation error", error);
-    },
+    }) => reservationsApi.updateAddOns(id, addOns),
+    onError: (error: any) =>
+      toast.error(error.response?.data?.message || "Failed to update add-ons"),
   });
 
   const createMutation = useMutation({
@@ -114,52 +109,58 @@ export default function ReservationForm({ reservation, onSuccess }: Props) {
     },
     onError: (error: any) =>
       toast.error(
-        error.response?.data?.error || "Failed to create reservation",
+        error.response?.data?.message || "Failed to create reservation",
       ),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       reservationsApi.update(id, data),
-    onSuccess: () => {
-      toast.success("Reservation updated successfully");
-      onSuccess();
-    },
     onError: (error: any) =>
       toast.error(
-        error.response?.data?.error || "Failed to update reservation",
+        error.response?.data?.message || "Failed to update reservation",
       ),
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       reservationsApi.updateStatus(id, status),
-    onSuccess: () => {
-      toast.success("Reservation status updated successfully");
-      onSuccess();
-    },
     onError: (error: any) =>
-      toast.error(
-        error.response?.data?.error || "Failed to update reservation status",
-      ),
+      toast.error(error.response?.data?.message || "Failed to update status"),
   });
 
   const onSubmit = (data: ReservationFormInput) => {
     if (isEditing && reservation) {
-      updateMutation.mutate({ id: reservation.id, data });
+      updateMutation.mutate(
+        { id: reservation.id, data },
+        {
+          onSuccess: () => {
+            if (data.status && data.status !== reservation.status) {
+              updateStatusMutation.mutate({
+                id: reservation.id,
+                status: data.status,
+              });
+            }
 
-      if (data.status && data.status !== reservation.status) {
-        updateStatusMutation.mutate({
-          id: reservation.id,
-          status: data.status,
-        });
-      }
-
-      // always update addons (even if empty — clears them)
-      addAddonsMutation.mutate({
-        id: reservation.id,
-        addOns: selectedAddons.filter((a) => a.addOnId !== ""),
-      });
+            addAddonsMutation.mutate(
+              {
+                id: reservation.id,
+                addOns: selectedAddons.filter((a) => a.addOnId !== ""),
+              },
+              {
+                onSuccess: () => onSuccess(),
+                onError: (error: any) => {
+                  const message =
+                    error.response?.data?.message ||
+                    error.response?.data?.error ||
+                    "Failed to update add-ons";
+                  toast.error(message);
+                },
+              },
+            );
+          },
+        },
+      );
     } else {
       createMutation.mutate({
         ...data,

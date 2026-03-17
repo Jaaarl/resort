@@ -140,7 +140,7 @@ export default function InventoryPage() {
       resetMovement();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to record movement");
+      toast.error(error.response?.data?.message || "Failed to record movement");
     },
   });
 

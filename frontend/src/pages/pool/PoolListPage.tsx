@@ -130,7 +130,9 @@ export default function PoolListPage() {
       toast.success("Pool slot enabled");
     },
     onError: (error: any) =>
-      toast.error(error.response?.data?.error || "Failed to enable pool slot"),
+      toast.error(
+        error.response?.data?.message || "Failed to enable pool slot",
+      ),
   });
 
   const onSlotSubmit = (data: PoolSlotInput) => {

@@ -144,7 +144,7 @@ export default function MaintenancePage() {
       toast.success("Maintenance task deleted");
     },
     onError: (error: any) =>
-      toast.error(error.response?.data?.error || "Failed to delete task"),
+      toast.error(error.response?.data?.message || "Failed to delete task"),
   });
 
   const onTaskSubmit = (data: TaskInput) => {
