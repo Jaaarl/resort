@@ -46,6 +46,18 @@ export default function ReservationCalendarPage() {
     "CANCELLED",
   ]);
 
+  const [visibleTypes, setVisibleTypes] = useState<string[]>([
+    "ROOM",
+    "POOL",
+    "BOTH",
+  ]);
+
+  const toggleType = (type: string) => {
+    setVisibleTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    );
+  };
+
   const { data: reservations } = useQuery({
     queryKey: ["reservations"],
     queryFn: () => reservationsApi.getAll().then((res) => res.data.data),
@@ -93,8 +105,10 @@ export default function ReservationCalendarPage() {
       return eventsArr;
     }) || [];
 
-  const filteredEvents = events.filter((e) =>
-    visibleStatuses.includes(e.extendedProps.reservation.status),
+  const filteredEvents = events.filter(
+    (e) =>
+      visibleStatuses.includes(e.extendedProps.reservation.status) &&
+      visibleTypes.includes(e.extendedProps.reservation.type),
   );
 
   const handleDateClick = (info: any) => {
@@ -150,6 +164,32 @@ export default function ReservationCalendarPage() {
             />
             <div>
               <p className="text-sm font-medium leading-none">{status}</p>
+              <p className="text-xs text-gray-400">{desc}</p>
+            </div>
+          </label>
+        ))}
+      </div>
+
+      <div className="bg-white border rounded-lg p-4 flex gap-6 flex-wrap items-center">
+        <p className="text-sm font-semibold text-gray-600">Filter by type:</p>
+        {[
+          { type: "ROOM", desc: "Room booking" },
+          { type: "POOL", desc: "Pool booking" },
+          { type: "BOTH", desc: "Room & Pool" },
+        ].map(({ type, desc }) => (
+          <label
+            key={type}
+            className="flex items-center cursor-pointer select-none"
+          >
+            <input
+              type="checkbox"
+              checked={visibleTypes.includes(type)}
+              onChange={() => toggleType(type)}
+              className="w-4 h-4 rounded"
+            />
+            <div className="w-4 h-4 rounded" />
+            <div>
+              <p className="text-sm font-medium leading-none">{type}</p>
               <p className="text-xs text-gray-400">{desc}</p>
             </div>
           </label>
