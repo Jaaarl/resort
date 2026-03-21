@@ -12,7 +12,7 @@ import AddOnsPage from "./pages/addons/AddOnsPage";
 import Layout from "./components/Layout";
 import PublicFeedbackPage from "./pages/public/ShareFeedbackPage";
 import MyTasksPage from "./pages/maintenance/MyTaskPage";
-
+import ReservationCalendarPage from "./pages/reservations/ReservationCalendarPage";
 export const router = createBrowserRouter([
   {
     path: "/login",
@@ -32,6 +32,7 @@ export const router = createBrowserRouter([
       { path: "/addons", element: <AddOnsPage /> },
       { path: "/share-feedback", element: <PublicFeedbackPage /> },
       { path: "/my-tasks", element: <MyTasksPage /> },
+      { path: "/reservations/calendar", element: <ReservationCalendarPage /> },
     ],
   },
 ]);

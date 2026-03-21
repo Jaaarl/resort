@@ -8,6 +8,7 @@ const navItems = [
   { path: "/", label: "Dashboard" },
   { path: "/rooms", label: "Rooms" },
   { path: "/reservations", label: "Reservations" },
+  { path: "/reservations/calendar", label: "Calendar" },
   { path: "/pool", label: "Pool" },
   { path: "/maintenance", label: "Maintenance" },
   { path: "/inventory", label: "Inventory" },
