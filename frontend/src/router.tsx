@@ -13,6 +13,7 @@ import Layout from "./components/Layout";
 import PublicFeedbackPage from "./pages/public/ShareFeedbackPage";
 import MyTasksPage from "./pages/maintenance/MyTaskPage";
 import ReservationCalendarPage from "./pages/reservations/ReservationCalendarPage";
+import RoleRedirect from "./components/RoleRedirect";
 export const router = createBrowserRouter([
   {
     path: "/login",
@@ -22,7 +23,8 @@ export const router = createBrowserRouter([
     path: "/",
     element: <Layout />,
     children: [
-      { path: "/", element: <DashboardPage /> },
+      { path: "/", element: <RoleRedirect /> },
+      { path: "/dashboard", element: <DashboardPage /> },
       { path: "/rooms", element: <RoomListPage /> },
       { path: "/reservations", element: <ReservationListPage /> },
       { path: "/pool", element: <PoolListPage /> },

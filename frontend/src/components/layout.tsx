@@ -5,21 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 
 const navItems = [
-  { path: "/", label: "Dashboard" },
-  { path: "/rooms", label: "Rooms" },
-  { path: "/reservations", label: "Reservations" },
-  { path: "/reservations/calendar", label: "Calendar" },
-  { path: "/pool", label: "Pool" },
-  { path: "/maintenance", label: "Maintenance" },
-  { path: "/inventory", label: "Inventory" },
-  { path: "/feedback", label: "Feedback" },
-  { path: "/addons", label: "Add-ons" },
+  { path: "/dashboard", label: "Dashboard", adminOnly: true },
+  { path: "/reservations", label: "Reservations", adminOnly: false },
+  { path: "/reservations/calendar", label: "Calendar", adminOnly: false },
+  { path: "/rooms", label: "Rooms", adminOnly: true },
+  { path: "/pool", label: "Pool", adminOnly: true },
+  { path: "/addons", label: "Add-ons", adminOnly: true },
+  { path: "/maintenance", label: "Maintenance", adminOnly: true },
+  { path: "/my-tasks", label: "My Tasks", adminOnly: false },
+  { path: "/inventory", label: "Inventory", adminOnly: false },
+  { path: "/feedback", label: "Feedback", adminOnly: true },
 ];
 
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const visibleNavItems = navItems.filter(
+    (item) => !item.adminOnly || user?.role === "ADMIN",
+  );
 
   return (
     <div className="flex h-screen">
@@ -43,7 +47,7 @@ export default function Layout() {
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
